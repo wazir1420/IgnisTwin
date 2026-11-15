@@ -24,7 +24,7 @@ class MoreScreen extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: 12),
         child: AppCard(
           child: Row(children: [
-            IconBox(Icons.storage_outlined, color: AppColors.green, bg: AppColors.green.withOpacity(0.15), size: 48),
+            IconBox(Icons.storage_outlined, color: AppColors.green, bg: AppColors.green.withValues(alpha: 0.15), size: 48),
             const SizedBox(width: 14),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -59,7 +59,7 @@ class MoreScreen extends StatelessWidget {
         child: AppCard(
           onTap: onTap,
           child: Row(children: [
-            IconBox(i, color: c, bg: c.withOpacity(0.15), size: 48),
+            IconBox(i, color: c, bg: c.withValues(alpha: 0.15), size: 48),
             const SizedBox(width: 14),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

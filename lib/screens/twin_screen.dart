@@ -56,7 +56,7 @@ class TwinScreen extends StatelessWidget {
                 style: mono.copyWith(color: AppColors.grey, fontSize: 11)),
             const SizedBox(height: 16),
             AppCard(
-              border: col.withOpacity(0.5),
+              border: col.withValues(alpha: 0.5),
               padding: const EdgeInsets.all(18),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [

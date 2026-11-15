@@ -49,8 +49,8 @@ class HomeScreen extends StatelessWidget {
             ]),
             const SizedBox(height: 18),
             AppCard(
-              border: col.withOpacity(0.5),
-              fill: col.withOpacity(0.10),
+              border: col.withValues(alpha: 0.5),
+              fill: col.withValues(alpha: 0.10),
               padding: const EdgeInsets.all(20),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
@@ -148,7 +148,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _incidentCard(BuildContext context, Incident inc, bool flame) => AppCard(
-        border: AppColors.red.withOpacity(0.5),
+        border: AppColors.red.withValues(alpha: 0.5),
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => IncidentScreen(incident: inc))),
         child: Row(children: [
           const IconBox(Icons.local_fire_department, color: AppColors.red, bg: Color(0xFF3A1D22), size: 56),

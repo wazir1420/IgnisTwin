@@ -35,7 +35,7 @@ class SimulationScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     AppCard(
-                      border: AppColors.orange.withOpacity(0.5),
+                      border: AppColors.orange.withValues(alpha: 0.5),
                       fill: const Color(0xFF2E2A22),
                       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         const Icon(Icons.warning_amber_rounded, color: AppColors.orange),

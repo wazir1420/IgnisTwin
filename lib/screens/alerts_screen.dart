@@ -67,11 +67,11 @@ class _AlertsScreenState extends State<AlertsScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: AppCard(
-        border: a.level == RiskLevel.critical && !a.resolved ? AppColors.red.withOpacity(0.5) : null,
+        border: a.level == RiskLevel.critical && !a.resolved ? AppColors.red.withValues(alpha: 0.5) : null,
         fill: a.level == RiskLevel.critical && !a.resolved ? const Color(0xFF2A1D22) : null,
         onTap: () => appState.markRead(a),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          IconBox(icon, color: col, bg: col.withOpacity(0.18), size: 54),
+          IconBox(icon, color: col, bg: col.withValues(alpha: 0.18), size: 54),
           const SizedBox(width: 14),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

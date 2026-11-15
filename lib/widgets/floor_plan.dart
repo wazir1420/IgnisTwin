@@ -7,7 +7,7 @@ class FloorPlan extends StatelessWidget {
   final double w, h;
   final RiskLevel lvl;
   final bool flame;
-  const FloorPlan(this.w, this.h, this.lvl, this.flame);
+  const FloorPlan(this.w, this.h, this.lvl, this.flame, {super.key});
 
   Rect _r(double l, double t, double ww, double hh) => Rect.fromLTWH(l * w, t * h, ww * w, hh * h);
 
@@ -35,15 +35,15 @@ class FloorPlan extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lab03 = lvl.color;
-    final dot = (Color c) => Container(width: 12, height: 12, decoration: BoxDecoration(color: c, shape: BoxShape.circle));
+    Widget dot(Color c) => Container(width: 12, height: 12, decoration: BoxDecoration(color: c, shape: BoxShape.circle));
     return Stack(children: [
-      _room(_r(0.02, 0.02, 0.33, 0.38), 'LAB 01', AppColors.green.withOpacity(0.7), child: dot(AppColors.green)),
+      _room(_r(0.02, 0.02, 0.33, 0.38), 'LAB 01', AppColors.green.withValues(alpha: 0.7), child: dot(AppColors.green)),
       _room(_r(0.38, 0.02, 0.28, 0.38), 'LAB 03', lab03,
-          fill: lvl == RiskLevel.critical ? AppColors.red.withOpacity(0.18) : lvl == RiskLevel.warning ? AppColors.yellow.withOpacity(0.10) : null,
+          fill: lvl == RiskLevel.critical ? AppColors.red.withValues(alpha: 0.18) : lvl == RiskLevel.warning ? AppColors.yellow.withValues(alpha: 0.10) : null,
           child: flame
               ? const Icon(Icons.local_fire_department, color: AppColors.red, size: 30)
               : dot(lab03)),
-      _room(_r(0.69, 0.02, 0.29, 0.38), 'RM 101', AppColors.green.withOpacity(0.7), child: dot(AppColors.green)),
+      _room(_r(0.69, 0.02, 0.29, 0.38), 'RM 101', AppColors.green.withValues(alpha: 0.7), child: dot(AppColors.green)),
       Positioned.fromRect(
         rect: _r(0.02, 0.44, 0.96, 0.12),
         child: Container(
@@ -53,11 +53,11 @@ class FloorPlan extends StatelessWidget {
         ),
       ),
       _room(_r(0.02, 0.60, 0.30, 0.37), 'STAIRS 1', AppColors.border),
-      _room(_r(0.35, 0.60, 0.30, 0.37), 'OFFICE 02', AppColors.green.withOpacity(0.7), child: dot(AppColors.green)),
+      _room(_r(0.35, 0.60, 0.30, 0.37), 'OFFICE 02', AppColors.green.withValues(alpha: 0.7), child: dot(AppColors.green)),
       _room(_r(0.68, 0.60, 0.30, 0.37), 'STORAGE', AppColors.grey, dashed: true, sub: 'NO SENSOR'),
       Positioned.fromRect(
         rect: _r(0.0, 0.70, 0.03, 0.16),
-        child: Container(color: AppColors.green.withOpacity(0.5)),
+        child: Container(color: AppColors.green.withValues(alpha: 0.5)),
       ),
       if (lvl == RiskLevel.critical)
         Positioned.fill(

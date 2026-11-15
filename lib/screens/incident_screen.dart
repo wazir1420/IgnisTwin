@@ -35,7 +35,7 @@ class IncidentScreen extends StatelessWidget {
                     ]),
                     const SizedBox(height: 16),
                     AppCard(
-                      border: AppColors.red.withOpacity(0.6),
+                      border: AppColors.red.withValues(alpha: 0.6),
                       fill: const Color(0xFF3A2026),
                       padding: const EdgeInsets.all(22),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
