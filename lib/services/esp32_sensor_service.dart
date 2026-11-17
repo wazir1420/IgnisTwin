@@ -9,8 +9,13 @@ class Esp32SensorService implements SensorService {
   Esp32SensorService(this.ip);
 
   @override
+  int get sensorCount => 2;
+
+  @override
   Future<SensorReading> read() async {
-    final r = await http.get(Uri.parse('http://$ip/data')).timeout(const Duration(seconds: 3));
+    final r = await http
+        .get(Uri.parse('http://$ip/data'))
+        .timeout(const Duration(seconds: 3));
     return SensorReading.fromJson(jsonDecode(r.body) as Map<String, dynamic>);
   }
 

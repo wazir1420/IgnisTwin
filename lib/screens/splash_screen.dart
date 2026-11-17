@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
 import '../core/app_theme.dart';
-import '../core/session.dart';
 import '../providers/app_provider.dart';
+import '../services/auth_service.dart';
+import 'admin_dashboard_screen.dart';
 import 'login_screen.dart';
 import 'shell_screen.dart';
 
@@ -23,22 +24,45 @@ class _SplashScreenState extends State<SplashScreen> {
     _navigationTimer = Timer(const Duration(milliseconds: 2200), _next);
   }
 
-  /// Pehle login kar chuke hain to seedha app khul jaye (dobara login na karna pade).
   Future<void> _next() async {
     if (!mounted) return;
-    final loggedIn = await Session.isLoggedIn();
-    if (!mounted) return;
+    try {
+      final session = await AuthService.instance.restoreSession();
+      if (!mounted) return;
 
-    if (loggedIn) {
+      if (session == null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+        return;
+      }
+
+      context.read<AppProvider>().setCurrentUser(
+        role: session['role'].toString(),
+        name: session['name']?.toString() ?? 'Operator',
+        email: session['email']?.toString() ?? '',
+        uid: session['uid']?.toString() ?? '',
+        phone: session['phone']?.toString() ?? '',
+        photoBase64: session['photoBase64']?.toString() ?? '',
+      );
       context.read<AppProvider>().start();
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const Shell()),
+        MaterialPageRoute(
+          builder: (_) => session['role'] == 'admin'
+              ? const AdminDashboardScreen()
+              : const Shell(),
+        ),
       );
-    } else {
+    } catch (e) {
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        MaterialPageRoute(
+          builder: (_) =>
+              LoginScreen(initialMessage: 'Could not restore your session: $e'),
+        ),
       );
     }
   }

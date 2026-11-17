@@ -1,0 +1,95 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "users": {
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || (auth.uid === $uid && !data.exists() && newData.child('role').val() === 'user' && newData.child('email').val() === auth.token.email && newData.child('accessStatus').val() === 'pending'))",
+        ".validate": "newData.hasChildren(['name', 'email', 'role'])",
+        "name": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
+        },
+        "email": {
+          ".validate": "newData.isString() && newData.val().length <= 254"
+        },
+        "role": {
+          ".validate": "newData.val() === 'admin' || newData.val() === 'user'"
+        },
+        "accessStatus": {
+          ".validate": "newData.val() === 'pending' || newData.val() === 'approved'"
+        },
+        "phone": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.isString() && newData.val().length <= 32"
+        },
+        "photoBase64": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.isString() && newData.val().length <= 180000"
+        },
+        "devices": {
+          "$deviceId": {
+            ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+            ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+            ".validate": "newData.hasChildren(['name', 'zone', 'enabled'])",
+            "name": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
+            },
+            "zone": {
+              ".validate": "newData.isString() && newData.val().length <= 100"
+            },
+            "enabled": {
+              ".validate": "newData.isBoolean()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "devices": {
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+      "$deviceId": {
+        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+        ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || (root.child('users').child(auth.uid).child('accessStatus').val() === 'approved' && root.child('users').child(auth.uid).child('devices').child($deviceId).exists()))",
+        "ownerUid": {
+          ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+          ".validate": "newData.isString() && root.child('users').child(newData.val()).exists()"
+        },
+        "sensordata": {
+          ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || (root.child('users').child(auth.uid).child('accessStatus').val() === 'approved' && root.child('users').child(auth.uid).child('devices').child($deviceId).exists()))",
+          ".write": true,
+          ".validate": "newData.hasChildren(['flame', 'smoke', 'lastSeen'])",
+          "flame": {
+            ".validate": "newData.isBoolean()"
+          },
+          "smoke": {
+            ".validate": "newData.isNumber()"
+          },
+          "smokeAlert": {
+            ".validate": "newData.isBoolean()"
+          },
+          "flameAnalog": {
+            ".validate": "newData.isNumber()"
+          },
+          "lastSeen": {
+            ".validate": "newData.isNumber()"
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
+        "$other": {
+          ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+          ".validate": false
+        }
+      }
+    }
+  }
+}

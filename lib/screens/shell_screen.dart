@@ -7,6 +7,7 @@ import 'twin_screen.dart';
 import 'sensors_screen.dart';
 import 'alerts_screen.dart';
 import 'more_screen.dart';
+import '../widgets/profile_drawer.dart';
 
 class Shell extends StatelessWidget {
   const Shell({super.key});
@@ -24,6 +25,7 @@ class Shell extends StatelessWidget {
         builder: (context, st, _) {
           final i = st.tab;
           return Scaffold(
+          drawer: const ProfileDrawer(),
           body: SafeArea(
             child: IndexedStack(index: i, children: const [
               HomeScreen(),

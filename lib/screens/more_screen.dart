@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
 import '../core/app_theme.dart';
-import '../core/session.dart';
 import '../models/data_source.dart';
 import '../providers/app_provider.dart';
+import '../services/auth_service.dart';
 import '../widgets/app_card.dart';
 import '../widgets/icon_box.dart';
+import 'admin_dashboard_screen.dart';
 import 'login_screen.dart';
 import 'simulation_screen.dart';
 
@@ -24,81 +25,98 @@ class MoreScreen extends StatelessWidget {
           style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 18),
-        _tile(
-          Icons.science_outlined,
-          'Simulation Mode',
-          'Test alerts with sliders',
-          AppColors.orange,
-          () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const SimulationScreen()),
-          ),
-        ),
-        // Data source: firebase / esp32
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: AppCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    IconBox(
-                      Icons.storage_outlined,
-                      color: AppColors.green,
-                      bg: AppColors.green.withValues(alpha: 0.15),
-                      size: 48,
-                    ),
-                    const SizedBox(width: 14),
-                    const Expanded(
-                      child: Text(
-                        'Data source',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  child: SegmentedButton<DataSource>(
-                    showSelectedIcon: false,
-                    segments: [
-                      for (final d in DataSource.values)
-                        ButtonSegment(value: d, label: Text(d.label)),
-                    ],
-                    selected: {p.source},
-                    onSelectionChanged: (v) => p.setSource(v.first),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  switch (p.source) {
-                    DataSource.firebase =>
-                      'Real sensors via Firebase Realtime Database.',
-                    DataSource.esp32 =>
-                      'Direct local WiFi connection to ESP32.',
-                  },
-                  style: const TextStyle(color: AppColors.muted, fontSize: 13),
-                ),
-              ],
+        if (p.isAdmin)
+          _tile(
+            Icons.science_outlined,
+            'Simulation Mode',
+            'Test alerts with sliders',
+            AppColors.orange,
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SimulationScreen()),
             ),
           ),
-        ),
-        _tile(
-          Icons.router_outlined,
-          'ESP32 / Smoke settings',
-          'Local IP & smoke threshold',
-          AppColors.cyan,
-          () => _settings(context),
-        ),
+        if (p.isAdmin)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      IconBox(
+                        Icons.storage_outlined,
+                        color: AppColors.green,
+                        bg: AppColors.green.withValues(alpha: 0.15),
+                        size: 48,
+                      ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Text(
+                          'Data source',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    child: SegmentedButton<DataSource>(
+                      showSelectedIcon: false,
+                      segments: [
+                        for (final d in DataSource.values)
+                          ButtonSegment(value: d, label: Text(d.label)),
+                      ],
+                      selected: {p.source},
+                      onSelectionChanged: (v) => p.setSource(v.first),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    switch (p.source) {
+                      DataSource.firebase =>
+                        'Real sensors via Firebase Realtime Database.',
+                      DataSource.esp32 =>
+                        'Direct local WiFi connection to ESP32.',
+                    },
+                    style: const TextStyle(
+                      color: AppColors.muted,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        if (p.isAdmin)
+          _tile(
+            Icons.router_outlined,
+            'ESP32 / Smoke settings',
+            'Local IP & smoke threshold',
+            AppColors.cyan,
+            () => _settings(context),
+          ),
+        if (p.isAdmin)
+          _tile(
+            Icons.dashboard_customize,
+            'Admin Dashboard',
+            'Manage users and connected devices',
+            AppColors.cyan,
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
+            ),
+          ),
         _tile(Icons.logout, 'Sign out', '', AppColors.muted, () async {
           final app = context.read<AppProvider>();
           app.stop();
-          await Session.setLoggedIn(false); // sign out par yaad rakhna band
+          app.setCurrentUser(role: 'user', name: 'Operator', email: '');
+          await AuthService.instance.signOut();
           if (!context.mounted) return;
           Navigator.pushAndRemoveUntil(
             context,

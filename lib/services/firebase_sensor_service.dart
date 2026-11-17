@@ -6,10 +6,10 @@ import '../core/app_config.dart';
 import '../models/sensor_reading.dart';
 import 'sensor_service.dart';
 
-/// ESP32 -> Firebase Realtime Database (/sensors) -> yeh service -> app
+/// ESP32 -> devices/{deviceId}/sensordata; user assignment -> users/{uid}/devices
 ///
 /// Database mein ye data hona chahiye:
-///   `sensors: { flame: true/false, smoke: 0-4095, lastSeen: <server timestamp ms> }`
+///   `devices/{deviceId}/sensordata: { flame, smoke, lastSeen }`
 ///
 /// Parsing flexible hai: flame 0/1 ya "true"/"false" bhi chalega, smoke string
 /// bhi chalega, aur lastSeen seconds mein ho to bhi theek.
@@ -17,8 +17,34 @@ import 'sensor_service.dart';
 /// Firebase ka listener (onValue) real time mein naya data khud push karta hai.
 /// Provider har second read() bulata hai aur yahan se latest value mil jati hai.
 class FirebaseSensorService implements SensorService {
-  StreamSubscription<DatabaseEvent>? _dataSub;
+  FirebaseSensorService(this.userUid, {required this.onSensorCountChanged}) {
+    final db = FirebaseDatabase.instanceFor(
+      app: Firebase.app(),
+      databaseURL: kDatabaseUrl,
+    );
+    _offsetSub = db.ref('.info/serverTimeOffset').onValue.listen((event) {
+      _offsetMs = (event.snapshot.value as num?)?.toInt() ?? 0;
+    }, onError: (Object error) => debugPrint('Firebase offset error: $error'));
+    _assignmentSub = db
+        .ref('users/$userUid/devices')
+        .onValue
+        .listen(
+          (event) => _syncDeviceSubscriptions(db, event.snapshot.value),
+          onError: (Object error) {
+            _lastError = '$error';
+            debugPrint('Firebase user device read error: $error');
+            _completeFirstEvent();
+          },
+        );
+  }
+
+  final String userUid;
+  final ValueChanged<int> onSensorCountChanged;
+  StreamSubscription<DatabaseEvent>? _assignmentSub;
   StreamSubscription<DatabaseEvent>? _offsetSub;
+  final Map<String, StreamSubscription<DatabaseEvent>> _deviceSubscriptions =
+      {};
+  final Map<String, dynamic> _deviceReadings = {};
   final _firstEvent = Completer<void>();
 
   bool? _flame;
@@ -26,54 +52,106 @@ class FirebaseSensorService implements SensorService {
   int? _lastSeenMs; // ESP32 ne data kab bheja (server time)
   int _offsetMs = 0; // phone ki clock aur Firebase server ki clock ka farq
   String? _lastError;
+  int _sensorCount = 0;
 
-  FirebaseSensorService() {
-    final db = FirebaseDatabase.instanceFor(
-      app: Firebase.app(),
-      databaseURL: kDatabaseUrl,
-    );
+  @override
+  int get sensorCount => _sensorCount;
 
-    _offsetSub = db.ref('.info/serverTimeOffset').onValue.listen((e) {
-      _offsetMs = (e.snapshot.value as num?)?.toInt() ?? 0;
-    }, onError: (e) => debugPrint('Firebase offset error: $e'));
-
-    _dataSub = db
-        .ref('sensors')
-        .onValue
-        .listen(
-          (event) {
-            _apply(event.snapshot.value);
-            if (!_firstEvent.isCompleted) _firstEvent.complete();
-          },
-          onError: (e) {
-            // Aksar yahan "permission-denied" aata hai (Rules ka masla)
-            _lastError = '$e';
-            debugPrint('Firebase read error: $e');
-            if (!_firstEvent.isCompleted) _firstEvent.complete();
-          },
-        );
+  void _completeFirstEvent() {
+    if (!_firstEvent.isCompleted) _firstEvent.complete();
   }
 
-  /// /sensors ka raw value -> flame + smoke + lastSeen.
-  /// Agar data `/sensors/<device>/...` jaisa nested ho to pehla device utha lete hain.
-  void _apply(dynamic raw) {
-    final map = _readingsMap(raw);
-    if (map == null) return;
+  void _syncDeviceSubscriptions(FirebaseDatabase db, dynamic rawAssignments) {
+    final assignments = rawAssignments is Map ? rawAssignments : const {};
+    final enabledIds = <String>{};
+    for (final entry in assignments.entries) {
+      if (entry.value is Map && (entry.value as Map)['enabled'] != false) {
+        enabledIds.add(entry.key.toString());
+      }
+    }
+    _sensorCount = enabledIds.length * 2;
+    onSensorCountChanged(_sensorCount);
 
-    final flame = _asBool(_pick(map, const ['flame', 'flameDetected', 'fire']));
-    if (flame == null) return; // flame field hi nahi mila
+    for (final id in _deviceSubscriptions.keys.toList()) {
+      if (enabledIds.contains(id)) continue;
+      _deviceSubscriptions.remove(id)?.cancel();
+      _deviceReadings.remove(id);
+    }
+    for (final id in enabledIds) {
+      if (_deviceSubscriptions.containsKey(id)) continue;
+      _deviceSubscriptions[id] = db
+          .ref('devices/$id/sensordata')
+          .onValue
+          .listen(
+            (event) {
+              _deviceReadings[id] = event.snapshot.value;
+              _apply(_deviceReadings);
+              if (_flame != null) _completeFirstEvent();
+            },
+            onError: (Object error) {
+              _lastError = '$error';
+              debugPrint('Firebase sensor read error for $id: $error');
+              _completeFirstEvent();
+            },
+          );
+    }
+    _apply(_deviceReadings);
+    if (enabledIds.isEmpty || _flame != null) _completeFirstEvent();
+  }
 
-    _flame = flame;
-    _smoke = _asInt(_pick(map, const ['smoke', 'smokeLevel', 'smokeValue']));
+  /// Device readings ka raw value -> flame + smoke + lastSeen.
+  void _apply(Map<String, dynamic> readingsByDevice) {
+    Map? latestReadings;
+    int latestTimestamp = -1;
+    for (final raw in readingsByDevice.values) {
+      final readings = _readingsMap(raw);
+      if (readings == null ||
+          _asBool(_pick(readings, const ['flame', 'flameDetected', 'fire'])) ==
+              null) {
+        continue;
+      }
+      final timestamp = _asMillis(
+        _pick(readings, const [
+          'lastSeen',
+          'last_seen',
+          'timestamp',
+          'updatedAt',
+        ]),
+      );
+      if (latestReadings == null || (timestamp ?? 0) > latestTimestamp) {
+        latestReadings = readings;
+        latestTimestamp = timestamp ?? 0;
+      }
+    }
+
+    if (latestReadings == null) {
+      _flame = null;
+      _smoke = 0;
+      _lastSeenMs = null;
+      return;
+    }
+    _flame = _asBool(
+      _pick(latestReadings, const ['flame', 'flameDetected', 'fire']),
+    );
+    _smoke = _asInt(
+      _pick(latestReadings, const ['smoke', 'smokeLevel', 'smokeValue']),
+    );
     _lastSeenMs = _asMillis(
-      _pick(map, const ['lastSeen', 'last_seen', 'timestamp', 'updatedAt']),
+      _pick(latestReadings, const [
+        'lastSeen',
+        'last_seen',
+        'timestamp',
+        'updatedAt',
+      ]),
     );
     _lastError = null;
   }
 
   Map? _readingsMap(dynamic raw) {
     if (raw is! Map) return null;
-    if (_pick(raw, const ['flame', 'flameDetected', 'fire']) != null) return raw;
+    if (_pick(raw, const ['flame', 'flameDetected', 'fire']) != null) {
+      return raw;
+    }
     // Nested (per-device) structure: pehla child jo reading rakhta ho
     for (final child in raw.values) {
       if (child is Map &&
@@ -121,9 +199,7 @@ class FirebaseSensorService implements SensorService {
   static int _asInt(dynamic v) {
     if (v is num) return v.toInt();
     if (v is String) {
-      return int.tryParse(v.trim()) ??
-          double.tryParse(v.trim())?.toInt() ??
-          0;
+      return int.tryParse(v.trim()) ?? double.tryParse(v.trim())?.toInt() ?? 0;
     }
     return 0;
   }
@@ -145,7 +221,7 @@ class FirebaseSensorService implements SensorService {
     if (!_firstEvent.isCompleted) {
       await _firstEvent.future.timeout(
         const Duration(seconds: 3),
-        onTimeout: () {},
+        onTimeout: _completeFirstEvent,
       );
     }
 
@@ -154,7 +230,7 @@ class FirebaseSensorService implements SensorService {
       throw Exception(
         _lastError != null
             ? 'Firebase error: $_lastError'
-            : 'Firebase ke /sensors mein data nahi hai (URL, Rules ya ESP32 check karein)',
+            : 'Aap ke users/$userUid/devices mein assigned device ki live reading nahi mili. Device ID aur rules check karein.',
       );
     }
 
@@ -170,7 +246,10 @@ class FirebaseSensorService implements SensorService {
 
   @override
   void dispose() {
-    _dataSub?.cancel();
+    _assignmentSub?.cancel();
     _offsetSub?.cancel();
+    for (final subscription in _deviceSubscriptions.values) {
+      subscription.cancel();
+    }
   }
 }

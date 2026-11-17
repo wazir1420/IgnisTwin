@@ -12,6 +12,8 @@ import '../services/push_service.dart';
 import '../services/sensor_service.dart';
 
 class AppProvider extends ChangeNotifier {
+  static const _offlineAlertFailureThreshold = 10;
+
   /// firebaseReady = Firebase.initializeApp kamyab hua ya nahi.
   /// Kamyab na ho to app dummy data nahi dikhati, sensors OFFLINE dikhate hain.
   AppProvider({this.firebaseReady = false}) : source = DataSource.firebase {
@@ -25,6 +27,7 @@ class AppProvider extends ChangeNotifier {
   DataSource source;
   String espIp = '192.168.1.50'; // sirf DataSource.esp32 (local WiFi) ke liye
   int smokeThreshold = 1500; // ESP32 ADC (0-4095)
+  int _assignedSensorCount = 0;
 
   // ---- manual simulation (slider wali screen) ----
   bool simulation = false;
@@ -36,11 +39,62 @@ class AppProvider extends ChangeNotifier {
   bool liveFlame = false;
   int liveSmoke = 0;
   DateTime? lastUpdate;
+
   /// Aakhri failure ki wajah (sensors screen par dikhti hai) — masla debug karne ke liye
   String? lastError;
   int _fails = 0;
   bool _busy = false;
   bool _offlineAlerted = false;
+
+  // ---- user session ----
+  String currentUserRole = 'user';
+  String currentUserName = 'Operator';
+  String currentUserEmail = '';
+  String currentUserPhone = '';
+  String currentUserPhotoBase64 = '';
+  String currentUserId = '';
+
+  bool get isAdmin => currentUserRole == 'admin';
+  bool get canRespond =>
+      currentUserRole == 'admin' || currentUserRole == 'user';
+
+  void setCurrentUser({
+    required String role,
+    required String name,
+    required String email,
+    String uid = '',
+    String phone = '',
+    String photoBase64 = '',
+  }) {
+    final userChanged = currentUserId != uid;
+    currentUserRole = role;
+    currentUserName = name;
+    currentUserEmail = email;
+    currentUserPhone = phone;
+    currentUserPhotoBase64 = photoBase64;
+    currentUserId = uid;
+    if (userChanged && source == DataSource.firebase) {
+      tab = 0;
+      _service.dispose();
+      _assignedSensorCount = 0;
+      _service = _create(source);
+      online = false;
+      _fails = 0;
+      lastError = null;
+    }
+    notifyListeners();
+  }
+
+  void updateCurrentUserProfile({
+    required String name,
+    required String phone,
+    required String photoBase64,
+  }) {
+    currentUserName = name;
+    currentUserPhone = phone;
+    currentUserPhotoBase64 = photoBase64;
+    notifyListeners();
+  }
 
   // ---- history ----
   final List<AlertItem> alerts = [];
@@ -61,7 +115,13 @@ class AppProvider extends ChangeNotifier {
   bool get flame => simulation ? simFlame : liveFlame;
   int get smoke => simulation ? simSmoke : liveSmoke;
   bool get sensorsOnline => simulation || online;
-  int get onlineCount => sensorsOnline ? 2 : 0;
+  int get totalSensorCount => simulation
+      ? 2
+      : source == DataSource.firebase
+      ? _assignedSensorCount
+      : 2;
+  int get onlineCount => sensorsOnline ? totalSensorCount : 0;
+  int get offlineCount => totalSensorCount - onlineCount;
 
   /// Fire probability (0..1): flame 60% + smoke 40%
   double get risk {
@@ -97,7 +157,15 @@ class AppProvider extends ChangeNotifier {
   // ---- settings ----
   SensorService _create(DataSource s) => switch (s) {
     DataSource.firebase =>
-      firebaseReady ? FirebaseSensorService() : _UnavailableService(),
+      firebaseReady && currentUserId.isNotEmpty
+          ? FirebaseSensorService(
+              currentUserId,
+              onSensorCountChanged: (count) {
+                _assignedSensorCount = count;
+                notifyListeners();
+              },
+            )
+          : _UnavailableService(),
     DataSource.esp32 => Esp32SensorService(espIp),
   };
 
@@ -149,10 +217,19 @@ class AppProvider extends ChangeNotifier {
   }
 
   void _evaluate() {
+    if (totalSensorCount == 0) {
+      _offlineAlerted = false;
+      _fails = 0;
+      lastError = null;
+      _prev = RiskLevel.unknown;
+      notifyListeners();
+      return;
+    }
+
     final l = level;
 
     if (!sensorsOnline) {
-      if (!_offlineAlerted) {
+      if (_fails >= _offlineAlertFailureThreshold && !_offlineAlerted) {
         _offlineAlerted = true;
         _addAlert(
           RiskLevel.unknown,
@@ -262,10 +339,12 @@ class AppProvider extends ChangeNotifier {
 /// Firebase start nahi hua to ye service sirf error deti hai (app OFFLINE dikhati hai)
 class _UnavailableService implements SensorService {
   @override
-  Future<SensorReading> read() async =>
-      throw Exception(
-        'Firebase initialize nahi hua (lib/firebase_options.dart bharein)',
-      );
+  int get sensorCount => 0;
+
+  @override
+  Future<SensorReading> read() async => throw Exception(
+    'Firebase initialize nahi hua (lib/firebase_options.dart bharein)',
+  );
 
   @override
   void dispose() {}

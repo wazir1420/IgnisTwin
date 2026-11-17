@@ -30,12 +30,29 @@ class HomeScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const IconBox(Icons.menu, color: AppColors.text),
-              s.simulation
-                  ? const Pill('SIMULATION', AppColors.orange, dot: true)
-                  : s.sensorsOnline
-                  ? const Pill('LIVE', AppColors.green, dot: true)
-                  : const Pill('OFFLINE', AppColors.grey, dot: true),
+              IconBox(
+                Icons.menu,
+                color: AppColors.text,
+                onTap: () => Scaffold.of(context).openDrawer(),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Pill(
+                    appState.isAdmin
+                        ? 'ADMIN'
+                        : appState.currentUserRole.toUpperCase(),
+                    appState.isAdmin ? AppColors.cyan : AppColors.green,
+                    dot: true,
+                  ),
+                  const SizedBox(height: 6),
+                  s.simulation
+                      ? const Pill('SIMULATION', AppColors.orange, dot: true)
+                      : s.sensorsOnline
+                      ? const Pill('LIVE', AppColors.green, dot: true)
+                      : const Pill('OFFLINE', AppColors.grey, dot: true),
+                ],
+              ),
               Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -97,9 +114,17 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  kHomeName,
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+                Text(
+                  appState.isAdmin ? 'Command center' : 'Dashboard',
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${appState.currentUserName} · ${appState.currentUserRole}',
+                  style: const TextStyle(color: AppColors.muted, fontSize: 16),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -108,7 +133,7 @@ class HomeScreen extends StatelessWidget {
                       : lvl == RiskLevel.unknown
                       ? '$kMonitoredRoom · sensors not responding'
                       : '$kMonitoredRoom · conditions elevated',
-                  style: const TextStyle(color: AppColors.muted, fontSize: 16),
+                  style: const TextStyle(color: AppColors.muted, fontSize: 14),
                 ),
               ],
             ),
@@ -121,7 +146,7 @@ class HomeScreen extends StatelessWidget {
                   Icons.sensors,
                   '${s.onlineCount}',
                   'Sensors Online',
-                  trailing: '${s.onlineCount}/2',
+                  trailing: '${s.onlineCount}/${s.totalSensorCount}',
                   trailingColor: AppColors.green,
                 ),
               ),
@@ -129,7 +154,7 @@ class HomeScreen extends StatelessWidget {
               Expanded(
                 child: _stat(
                   Icons.wifi_off,
-                  '${2 - s.onlineCount}',
+                  '${s.offlineCount}',
                   'Sensors Offline',
                 ),
               ),
