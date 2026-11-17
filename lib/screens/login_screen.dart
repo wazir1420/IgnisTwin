@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
 import '../core/app_theme.dart';
@@ -121,6 +122,8 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => error = _mapFirebaseError(e.code));
     } on AuthAccessException catch (e) {
       setState(() => error = e.message);
+    } on PlatformException catch (e) {
+      setState(() => error = _mapAuthPlatformError(e.code));
     } on FirebaseException catch (e) {
       final detail = e.message?.toLowerCase() ?? '';
       if (e.plugin == 'firebase_database' &&
@@ -160,9 +163,24 @@ class _LoginScreenState extends State<LoginScreen> {
       });
     } on FirebaseAuthException catch (e) {
       setState(() => error = _mapFirebaseError(e.code));
+    } on PlatformException catch (e) {
+      setState(
+        () => error = _mapAuthPlatformError(e.code, passwordReset: true),
+      );
     } catch (e) {
       setState(() => error = 'Could not send reset email: $e');
     }
+  }
+
+  String _mapAuthPlatformError(String code, {bool passwordReset = false}) {
+    if (code.toUpperCase() == 'ERROR_INVALID_CREDENTIAL') {
+      if (passwordReset) {
+        return 'The password reset request could not be verified. Check the email address and try again.';
+      }
+      return 'Email or password is incorrect, or the sign-in details have expired. Check your details or reset your password.';
+    }
+    final action = passwordReset ? 'send the reset link' : 'sign in';
+    return 'Could not $action (${code.replaceAll('_', ' ').toLowerCase()}). Please try again.';
   }
 
   String _mapFirebaseError(String code) {
@@ -175,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
         return 'No account found for this email.';
       case 'wrong-password':
       case 'invalid-credential':
-        return 'Incorrect email or password.';
+        return 'Email or password is incorrect. Check your details or reset your password.';
       case 'invalid-email':
         return 'Email format is invalid.';
       case 'network-request-failed':
