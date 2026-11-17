@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
 import '../core/app_theme.dart';
 import '../core/formatters.dart';
+import '../core/home_config.dart';
 import '../models/risk_level.dart';
 import '../providers/app_provider.dart';
 import '../widgets/app_card.dart';
@@ -25,7 +26,7 @@ class TwinScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
-                child: const Text('Ground Floor', style: TextStyle(fontWeight: FontWeight.w700)),
+                child: const Text(kHomeName, style: TextStyle(fontWeight: FontWeight.w700)),
               ),
             ]),
             const SizedBox(height: 10),
@@ -52,7 +53,7 @@ class TwinScreen extends StatelessWidget {
               _legend(AppColors.cyan, 'ROUTE'),
             ]),
             const SizedBox(height: 6),
-            Text('Laboratory 03 uses real sensor data. Other rooms are simulated.',
+            Text('$kMonitoredRoom has the flame + smoke sensor. Other rooms are not monitored.',
                 style: mono.copyWith(color: AppColors.grey, fontSize: 11)),
             const SizedBox(height: 16),
             AppCard(
@@ -60,7 +61,7 @@ class TwinScreen extends StatelessWidget {
               padding: const EdgeInsets.all(18),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  const Text('Laboratory 03', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
+                  const Text(kMonitoredRoom, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
                   Pill(lvl.label, col),
                 ]),
                 const SizedBox(height: 16),

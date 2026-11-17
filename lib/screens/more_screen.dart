@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
 import '../core/app_theme.dart';
+import '../core/session.dart';
 import '../models/data_source.dart';
 import '../providers/app_provider.dart';
 import '../widgets/app_card.dart';
@@ -94,8 +95,11 @@ class MoreScreen extends StatelessWidget {
           AppColors.cyan,
           () => _settings(context),
         ),
-        _tile(Icons.logout, 'Sign out', '', AppColors.muted, () {
-          context.read<AppProvider>().stop();
+        _tile(Icons.logout, 'Sign out', '', AppColors.muted, () async {
+          final app = context.read<AppProvider>();
+          app.stop();
+          await Session.setLoggedIn(false); // sign out par yaad rakhna band
+          if (!context.mounted) return;
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => const LoginScreen()),

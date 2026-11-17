@@ -2,8 +2,10 @@
     <!-- Firebase / ESP32 (HTTP) ke liye internet permission zaroori hai;
          template mein ye sirf debug manifest mein hoti hai, release mein nahi. -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Android 13+ par notifications ke liye -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
-        android:label="ignistwin"
+        android:label="IgnisTwin"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -28,6 +30,11 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- FCM: Firebase Installations API (firebase_messaging 17+ ke liye zaroori) -->
+        <meta-data
+            android:name="firebase_messaging_installation_id_enabled"
+            android:value="true" />
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

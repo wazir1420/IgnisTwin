@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
 import '../core/app_theme.dart';
+import '../core/home_config.dart';
 import '../providers/app_provider.dart';
 import '../widgets/app_card.dart';
 import '../widgets/icon_box.dart';
@@ -58,7 +59,7 @@ class SimulationScreen extends StatelessWidget {
                     const SectionLabel('SCENARIO CONFIGURATION'),
                     const Text('TARGET ZONE', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700, fontSize: 13)),
                     const SizedBox(height: 8),
-                    AppCard(child: const Text('Laboratory 03 · Ground Floor', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17))),
+                    AppCard(child: const Text('$kMonitoredRoom · $kHomeName', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17))),
                     const SizedBox(height: 22),
                     Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                       const Text('SMOKE LEVEL', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700, fontSize: 13)),

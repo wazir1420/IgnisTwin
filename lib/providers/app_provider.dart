@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../core/home_config.dart';
 import '../models/alert_item.dart';
 import '../models/data_source.dart';
 import '../models/incident.dart';
@@ -7,6 +8,7 @@ import '../models/risk_level.dart';
 import '../models/sensor_reading.dart';
 import '../services/esp32_sensor_service.dart';
 import '../services/firebase_sensor_service.dart';
+import '../services/push_service.dart';
 import '../services/sensor_service.dart';
 
 class AppProvider extends ChangeNotifier {
@@ -155,7 +157,7 @@ class AppProvider extends ChangeNotifier {
         _addAlert(
           RiskLevel.unknown,
           'Sensors offline',
-          'Laboratory 03 · Health check failed',
+          '$kMonitoredRoom · sensor health check failed',
         );
       }
     } else {
@@ -176,16 +178,16 @@ class AppProvider extends ChangeNotifier {
         active = inc;
         _addAlert(
           RiskLevel.critical,
-          'Fire alert — Laboratory 03',
+          'Fire alert — $kMonitoredRoom',
           flame
-              ? 'Ground Floor · Flame confirmed'
-              : 'Ground Floor · High smoke level',
+              ? '$kMonitoredRoom · Flame confirmed'
+              : '$kMonitoredRoom · High smoke level',
         );
       } else if (l == RiskLevel.warning && _prev == RiskLevel.normal) {
         _addAlert(
           RiskLevel.warning,
-          'Smoke rising — Laboratory 03',
-          'Ground Floor · Smoke $smoke',
+          'Smoke rising — $kMonitoredRoom',
+          '$kMonitoredRoom · Smoke $smoke',
         );
       } else if (l == RiskLevel.normal && active != null) {
         final inc = active!;
@@ -194,7 +196,7 @@ class AppProvider extends ChangeNotifier {
         _addAlert(
           RiskLevel.normal,
           'Incident ${inc.id} closed',
-          'Laboratory 03 · ${inc.acknowledged ? "Acknowledged" : "Auto-resolved"}',
+          '$kMonitoredRoom · ${inc.acknowledged ? "Acknowledged" : "Auto-resolved"}',
           resolved: true,
         );
         active = null;
@@ -205,6 +207,8 @@ class AppProvider extends ChangeNotifier {
   }
 
   void _addAlert(RiskLevel l, String t, String s, {bool resolved = false}) {
+    // Device par turant notification (FCM/sender ke bagair bhi)
+    PushService.showAlert(t, s);
     alerts.insert(
       0,
       AlertItem(l, simulation ? '[SIM] $t' : t, s, resolved: resolved),

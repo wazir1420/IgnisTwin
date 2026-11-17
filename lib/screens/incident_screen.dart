@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
 import '../core/app_theme.dart';
 import '../core/formatters.dart';
+import '../core/home_config.dart';
 import '../models/incident.dart';
 import '../providers/app_provider.dart';
 import '../widgets/app_card.dart';
@@ -50,7 +51,7 @@ class IncidentScreen extends StatelessWidget {
                         const Row(children: [
                           Icon(Icons.location_on_outlined, color: AppColors.muted, size: 18),
                           SizedBox(width: 6),
-                          Expanded(child: Text('Main Building › Ground Floor › Laboratory 03', style: TextStyle(color: AppColors.muted))),
+                          Expanded(child: Text('$kHomeName › $kMonitoredRoom', style: TextStyle(color: AppColors.muted))),
                         ]),
                       ]),
                     ),
@@ -87,7 +88,7 @@ class IncidentScreen extends StatelessWidget {
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         const Text('Recommended Action', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
                         const SizedBox(height: 8),
-                        const Text('Evacuate Zone LAB03 immediately via Exit A. Corridor A remains clear.',
+                        const Text('Evacuate $kMonitoredRoom immediately and leave the house through the main door.',
                             style: TextStyle(color: AppColors.muted, fontSize: 16, height: 1.4)),
                         const SizedBox(height: 10),
                         Text('Recommended based on currently available sensor information.',

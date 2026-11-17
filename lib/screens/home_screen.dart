@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
 import '../core/app_theme.dart';
 import '../core/formatters.dart';
+import '../core/home_config.dart';
 import '../models/incident.dart';
 import '../models/risk_level.dart';
 import '../providers/app_provider.dart';
@@ -97,16 +98,16 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  'Main Building',
+                  kHomeName,
                   style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   lvl == RiskLevel.normal
-                      ? 'Ground Floor · All zones normal'
+                      ? '$kRoomCount rooms · all normal'
                       : lvl == RiskLevel.unknown
-                      ? 'Ground Floor · Sensors not responding'
-                      : 'Ground Floor · 1 zone elevated',
+                      ? '$kMonitoredRoom · sensors not responding'
+                      : '$kMonitoredRoom · conditions elevated',
                   style: const TextStyle(color: AppColors.muted, fontSize: 16),
                 ),
               ],
@@ -164,7 +165,7 @@ class HomeScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Fire Probability · Zone LAB03',
+                      'Fire Probability · $kMonitoredRoom',
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 16,
@@ -337,7 +338,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               const Text(
-                'Laboratory 03 · Ground Floor',
+                '$kMonitoredRoom · $kHomeName',
                 style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
               ),
               Text(

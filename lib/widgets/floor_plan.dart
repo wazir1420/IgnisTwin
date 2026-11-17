@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import '../core/app_colors.dart';
 import '../core/app_theme.dart';
+import '../core/home_config.dart';
 import '../models/risk_level.dart';
 
+/// Ghar ka simple floor plan: 3 rooms, sensors sirf monitored room mein.
 class FloorPlan extends StatelessWidget {
   final double w, h;
   final RiskLevel lvl;
   final bool flame;
   const FloorPlan(this.w, this.h, this.lvl, this.flame, {super.key});
 
-  Rect _r(double l, double t, double ww, double hh) => Rect.fromLTWH(l * w, t * h, ww * w, hh * h);
+  Rect _r(double l, double t, double ww, double hh) =>
+      Rect.fromLTWH(l * w, t * h, ww * w, hh * h);
 
-  Widget _room(Rect r, String name, Color c, {bool dashed = false, Widget? child, String? sub, Color? fill}) {
+  Widget _room(Rect r, String name, Color c,
+      {bool dashed = false, Widget? child, String? sub, Color? fill}) {
     return Positioned.fromRect(
       rect: r,
       child: Container(
@@ -24,7 +28,8 @@ class FloorPlan extends StatelessWidget {
         child: Stack(children: [
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(name, style: mono.copyWith(color: AppColors.muted, fontSize: 10)),
-            if (sub != null) Text(sub, style: mono.copyWith(color: AppColors.grey, fontSize: 8)),
+            if (sub != null)
+              Text(sub, style: mono.copyWith(color: AppColors.grey, fontSize: 8)),
           ]),
           if (child != null) Center(child: child),
         ]),
@@ -34,40 +39,45 @@ class FloorPlan extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lab03 = lvl.color;
-    Widget dot(Color c) => Container(width: 12, height: 12, decoration: BoxDecoration(color: c, shape: BoxShape.circle));
+    final roomCol = lvl.color;
+    Widget dot(Color c) => Container(
+        width: 12,
+        height: 12,
+        decoration: BoxDecoration(color: c, shape: BoxShape.circle));
+
     return Stack(children: [
-      _room(_r(0.02, 0.02, 0.33, 0.38), 'LAB 01', AppColors.green.withValues(alpha: 0.7), child: dot(AppColors.green)),
-      _room(_r(0.38, 0.02, 0.28, 0.38), 'LAB 03', lab03,
-          fill: lvl == RiskLevel.critical ? AppColors.red.withValues(alpha: 0.18) : lvl == RiskLevel.warning ? AppColors.yellow.withValues(alpha: 0.10) : null,
-          child: flame
-              ? const Icon(Icons.local_fire_department, color: AppColors.red, size: 30)
-              : dot(lab03)),
-      _room(_r(0.69, 0.02, 0.29, 0.38), 'RM 101', AppColors.green.withValues(alpha: 0.7), child: dot(AppColors.green)),
-      Positioned.fromRect(
-        rect: _r(0.02, 0.44, 0.96, 0.12),
-        child: Container(
-          alignment: Alignment.center,
-          decoration: BoxDecoration(color: const Color(0xFF1A212A), borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.border)),
-          child: Text('CORRIDOR A', style: mono.copyWith(color: AppColors.grey, fontSize: 10)),
-        ),
+      // Monitored room — yahan dono sensors lage hain, risk isi se aata hai
+      _room(
+        _r(0.03, 0.03, 0.46, 0.44),
+        kMonitoredRoom,
+        roomCol,
+        fill: lvl == RiskLevel.critical
+            ? AppColors.red.withValues(alpha: 0.18)
+            : lvl == RiskLevel.warning
+                ? AppColors.yellow.withValues(alpha: 0.10)
+                : null,
+        child: flame
+            ? const Icon(Icons.local_fire_department, color: AppColors.red, size: 30)
+            : dot(roomCol),
       ),
-      _room(_r(0.02, 0.60, 0.30, 0.37), 'STAIRS 1', AppColors.border),
-      _room(_r(0.35, 0.60, 0.30, 0.37), 'OFFICE 02', AppColors.green.withValues(alpha: 0.7), child: dot(AppColors.green)),
-      _room(_r(0.68, 0.60, 0.30, 0.37), 'STORAGE', AppColors.grey, dashed: true, sub: 'NO SENSOR'),
+      // Baqi do rooms — koi sensor nahi
+      _room(_r(0.53, 0.03, 0.44, 0.44), kRoomNames[1], AppColors.grey,
+          dashed: true, sub: 'NO SENSOR'),
+      _room(_r(0.03, 0.51, 0.94, 0.42), kRoomNames[2], AppColors.grey,
+          dashed: true, sub: 'NO SENSOR'),
+      // Main door / exit
       Positioned.fromRect(
-        rect: _r(0.0, 0.70, 0.03, 0.16),
+        rect: _r(0.42, 0.93, 0.16, 0.03),
         child: Container(color: AppColors.green.withValues(alpha: 0.5)),
       ),
       if (lvl == RiskLevel.critical)
         Positioned.fill(
           child: CustomPaint(
             painter: _RoutePainter([
-              Offset(0.52 * w, 0.30 * h),
-              Offset(0.52 * w, 0.50 * h),
-              Offset(0.15 * w, 0.50 * h),
-              Offset(0.15 * w, 0.78 * h),
-              Offset(0.02 * w, 0.78 * h),
+              Offset(0.26 * w, 0.25 * h),
+              Offset(0.26 * w, 0.72 * h),
+              Offset(0.50 * w, 0.72 * h),
+              Offset(0.50 * w, 0.94 * h),
             ]),
           ),
         ),

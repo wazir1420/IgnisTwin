@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
 import '../core/app_theme.dart';
+import '../core/session.dart';
 import '../providers/app_provider.dart';
 import '../widgets/app_card.dart';
 import 'shell_screen.dart';
@@ -13,24 +14,27 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final org = TextEditingController(text: 'BLD001');
+  final org = TextEditingController(text: 'HOME001');
   final email = TextEditingController();
   final pass = TextEditingController();
   String? error;
 
   // Demo credentials (change as you like)
-  static const _org = 'BLD001';
+  static const _org = 'HOME001';
   static const _email = 'admin@ignistwin.com';
   static const _pass = '123456';
 
-  void _login() {
+  Future<void> _login() async {
     if (org.text.trim().toUpperCase() == _org &&
         email.text.trim().toLowerCase() == _email &&
         pass.text == _pass) {
-      context.read<AppProvider>().start();
+      final app = context.read<AppProvider>();
+      await Session.setLoggedIn(true); // agli dafa seedha app khulegi
+      app.start();
+      if (!mounted) return;
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const Shell()));
     } else {
-      setState(() => error = 'Wrong details. Demo: BLD001 / $_email / $_pass');
+      setState(() => error = 'Wrong details. Demo: HOME001 / $_email / $_pass');
     }
   }
 
@@ -74,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 8),
               const Text('Emergency monitoring & response console', style: TextStyle(color: AppColors.muted, fontSize: 16)),
               const SizedBox(height: 30),
-              _field('ORGANIZATION ID', org),
+              _field('HOME ID', org),
               _field('EMAIL', email, hint: 'you@organization.com'),
               _field('PASSWORD', pass, obscure: true),
               if (error != null)

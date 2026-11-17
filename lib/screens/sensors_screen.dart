@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
 import '../core/app_theme.dart';
 import '../core/formatters.dart';
+import '../core/home_config.dart';
 import '../providers/app_provider.dart';
 import '../widgets/app_card.dart';
 import '../widgets/icon_box.dart';
@@ -30,8 +31,8 @@ class _SensorsScreenState extends State<SensorsScreen> {
             items.add(_card(
               icon: Icons.local_fire_department,
               iconColor: s.flame ? AppColors.red : AppColors.muted,
-              id: 'ESP32-F1-Z03-001',
-              loc: 'Ground Floor · Laboratory 03 · Flame',
+              id: kFlameSensorId,
+              loc: '$kMonitoredRoom · Flame sensor',
               online: on,
               value: s.flame ? 'DETECTED' : 'CLEAR',
               valueColor: s.flame ? AppColors.red : AppColors.text,
@@ -42,8 +43,8 @@ class _SensorsScreenState extends State<SensorsScreen> {
             items.add(_card(
               icon: Icons.air,
               iconColor: s.smoke >= s.smokeThreshold ? AppColors.red : AppColors.muted,
-              id: 'ESP32-F1-Z03-002',
-              loc: 'Ground Floor · Laboratory 03 · Smoke',
+              id: kSmokeSensorId,
+              loc: '$kMonitoredRoom · Smoke sensor',
               online: on,
               value: '${s.smoke}',
               valueColor: s.smoke >= s.smokeThreshold ? AppColors.red : AppColors.text,

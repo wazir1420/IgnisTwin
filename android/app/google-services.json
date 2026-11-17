@@ -1,0 +1,28 @@
+{
+  "project_info": {
+    "project_number": "684858196022",
+    "project_id": "ignistwin"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:684858196022:android:f5953b5bf0f06eb0a0d897",
+        "android_client_info": {
+          "package_name": "com.example.ignistwin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABx4zqJNyirhLrgt4HCLq4GTcHJGzTdog"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,8 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
 import '../core/app_theme.dart';
+import '../core/session.dart';
+import '../providers/app_provider.dart';
 import 'login_screen.dart';
+import 'shell_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -16,13 +20,27 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigationTimer = Timer(const Duration(milliseconds: 2200), () {
-      if (!mounted) return;
+    _navigationTimer = Timer(const Duration(milliseconds: 2200), _next);
+  }
+
+  /// Pehle login kar chuke hain to seedha app khul jaye (dobara login na karna pade).
+  Future<void> _next() async {
+    if (!mounted) return;
+    final loggedIn = await Session.isLoggedIn();
+    if (!mounted) return;
+
+    if (loggedIn) {
+      context.read<AppProvider>().start();
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const Shell()),
+      );
+    } else {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
-    });
+    }
   }
 
   @override
