@@ -9,31 +9,17 @@ class Pill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-    decoration: BoxDecoration(
-      color: color.withValues(alpha: 0.16),
-      borderRadius: BorderRadius.circular(20),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (dot) ...[
-          Container(
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 6),
-        ],
-        Text(
-          text,
-          style: mono.copyWith(
-            color: color,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.16),
+          borderRadius: BorderRadius.circular(20),
         ),
-      ],
-    ),
-  );
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          if (dot) ...[
+            Container(width: 7, height: 7, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+            const SizedBox(width: 6),
+          ],
+          Text(text, style: mono.copyWith(color: color, fontSize: 12, fontWeight: FontWeight.w700)),
+        ]),
+      );
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
 import '../core/app_theme.dart';
+import '../models/data_source.dart';
 import '../providers/app_provider.dart';
 import '../widgets/app_card.dart';
 import '../widgets/icon_box.dart';
@@ -19,29 +20,43 @@ class MoreScreen extends StatelessWidget {
       const SizedBox(height: 18),
       _tile(Icons.science_outlined, 'Simulation Mode', 'Test alerts with sliders', AppColors.orange,
           () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SimulationScreen()))),
-      // Data source: dummy ya real ESP32
+      // Data source: dummy / firebase / esp32
       Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: AppCard(
-          child: Row(children: [
-            IconBox(Icons.storage_outlined, color: AppColors.green, bg: AppColors.green.withValues(alpha: 0.15), size: 48),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Dummy data', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-                Text(p.useDummy ? 'ON · no hardware needed' : 'OFF · reading real ESP32',
-                    style: const TextStyle(color: AppColors.muted, fontSize: 13)),
-              ]),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              IconBox(Icons.storage_outlined, color: AppColors.green, bg: AppColors.green.withValues(alpha: 0.15), size: 48),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Text('Data source', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+              ),
+            ]),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: SegmentedButton<DataSource>(
+                showSelectedIcon: false,
+                segments: [
+                  for (final d in DataSource.values) ButtonSegment(value: d, label: Text(d.label)),
+                ],
+                selected: {p.source},
+                onSelectionChanged: (v) => p.setSource(v.first),
+              ),
             ),
-            Switch(
-              value: p.useDummy,
-              activeTrackColor: AppColors.cyan,
-              onChanged: p.setUseDummy,
+            const SizedBox(height: 10),
+            Text(
+              switch (p.source) {
+                DataSource.dummy => 'Fake demo data. No hardware needed.',
+                DataSource.firebase => 'Real sensors via Firebase Realtime Database.',
+                DataSource.esp32 => 'Direct local WiFi connection to ESP32.',
+              },
+              style: const TextStyle(color: AppColors.muted, fontSize: 13),
             ),
           ]),
         ),
       ),
-      _tile(Icons.router_outlined, 'ESP32 connection', 'IP address & smoke threshold', AppColors.cyan,
+      _tile(Icons.router_outlined, 'ESP32 / Smoke settings', 'Local IP & smoke threshold', AppColors.cyan,
           () => _settings(context)),
       _tile(Icons.logout, 'Sign out', '', AppColors.muted, () {
         context.read<AppProvider>().stop();

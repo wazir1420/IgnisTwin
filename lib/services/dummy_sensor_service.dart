@@ -41,4 +41,7 @@ class DummySensorService implements SensorService {
       time: DateTime.now(),
     );
   }
+
+  @override
+  void dispose() {}
 }

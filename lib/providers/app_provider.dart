@@ -1,19 +1,25 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/alert_item.dart';
+import '../models/data_source.dart';
 import '../models/incident.dart';
 import '../models/risk_level.dart';
 import '../services/dummy_sensor_service.dart';
 import '../services/esp32_sensor_service.dart';
+import '../services/firebase_sensor_service.dart';
 import '../services/sensor_service.dart';
 
 class AppProvider extends ChangeNotifier {
-  AppProvider() : _service = DummySensorService();
+  /// firebaseReady = Firebase.initializeApp kamyab hua ya nahi
+  AppProvider({bool firebaseReady = false})
+      : source = firebaseReady ? DataSource.firebase : DataSource.dummy {
+    _service = _create(source);
+  }
 
   // ---- data source ----
-  SensorService _service;
-  bool useDummy = true; // false karne par real ESP32 se data aayega
-  String espIp = '192.168.1.50';
+  late SensorService _service;
+  DataSource source;
+  String espIp = '192.168.1.50'; // sirf DataSource.esp32 (local WiFi) ke liye
   int smokeThreshold = 1500; // ESP32 ADC (0-4095)
 
   // ---- manual simulation (slider wali screen) ----
@@ -78,13 +84,22 @@ class AppProvider extends ChangeNotifier {
   @override
   void dispose() {
     _timer?.cancel();
+    _service.dispose();
     super.dispose();
   }
 
   // ---- settings ----
-  void setUseDummy(bool v) {
-    useDummy = v;
-    _service = v ? DummySensorService() : Esp32SensorService(espIp);
+  SensorService _create(DataSource s) => switch (s) {
+        DataSource.dummy => DummySensorService(),
+        DataSource.firebase => FirebaseSensorService(),
+        DataSource.esp32 => Esp32SensorService(espIp),
+      };
+
+  void setSource(DataSource s) {
+    if (s == source) return;
+    _service.dispose();
+    source = s;
+    _service = _create(s);
     online = false;
     _fails = 0;
     _offlineAlerted = false;
@@ -94,7 +109,10 @@ class AppProvider extends ChangeNotifier {
   void saveSettings(String ip, int thr) {
     espIp = ip.trim();
     smokeThreshold = thr;
-    if (!useDummy) _service = Esp32SensorService(espIp);
+    if (source == DataSource.esp32) {
+      _service.dispose();
+      _service = Esp32SensorService(espIp);
+    }
     notifyListeners();
   }
 

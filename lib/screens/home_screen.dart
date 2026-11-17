@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
 import '../core/app_theme.dart';
 import '../core/formatters.dart';
+import '../models/data_source.dart';
 import '../models/incident.dart';
 import '../models/risk_level.dart';
 import '../providers/app_provider.dart';
@@ -30,7 +31,7 @@ class HomeScreen extends StatelessWidget {
                   ? const Pill('SIMULATION', AppColors.orange, dot: true)
                   : !s.sensorsOnline
                       ? const Pill('OFFLINE', AppColors.grey, dot: true)
-                      : s.useDummy
+                      : s.source == DataSource.dummy
                           ? const Pill('DEMO DATA', AppColors.cyan, dot: true)
                           : const Pill('LIVE', AppColors.green, dot: true),
               Stack(clipBehavior: Clip.none, children: [

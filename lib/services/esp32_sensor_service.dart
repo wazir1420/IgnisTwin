@@ -13,4 +13,7 @@ class Esp32SensorService implements SensorService {
     final r = await http.get(Uri.parse('http://$ip/data')).timeout(const Duration(seconds: 3));
     return SensorReading.fromJson(jsonDecode(r.body) as Map<String, dynamic>);
   }
+
+  @override
+  void dispose() {}
 }
