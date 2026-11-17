@@ -23,15 +23,15 @@ class SimulationScreen extends StatelessWidget {
                     Row(children: [
                       IconBox(Icons.chevron_left, color: AppColors.text, onTap: () => Navigator.pop(context)),
                       const SizedBox(width: 14),
-                      const Text('Simulation Mode', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
+                      const Text('Test alerts', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
                     ]),
                     const SizedBox(height: 18),
                     Container(
                       padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
                       child: Row(children: [
-                        _seg('LIVE', !s.simulation, () => s.setSimulation(false)),
-                        _seg('SIMULATION', s.simulation, () => s.setSimulation(true)),
+                        _seg('REAL READINGS', !s.simulation, () => s.setSimulation(false)),
+                        _seg('TEST ALERTS', s.simulation, () => s.setSimulation(true)),
                       ]),
                     ),
                     const SizedBox(height: 16),
@@ -43,26 +43,26 @@ class SimulationScreen extends StatelessWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Text(s.simulation ? 'SIMULATION MODE ACTIVE' : 'LIVE MODE',
+                            Text(s.simulation ? 'TEST ALERTS ARE ON' : 'REAL READINGS ARE ON',
                                 style: mono.copyWith(color: AppColors.orange, fontWeight: FontWeight.w700)),
                             const SizedBox(height: 6),
                             Text(
                               s.simulation
-                                  ? 'Values below replace the real ESP32 data. Events generated here are marked [SIM].'
-                                  : 'The app is reading real ESP32 sensor data.',
+                                  ? 'Changes below are for testing only and will not come from your safety device.'
+                                  : 'The app is showing readings from your connected safety device.',
                               style: const TextStyle(color: AppColors.muted, height: 1.4),
                             ),
                           ]),
                         ),
                       ]),
                     ),
-                    const SectionLabel('SCENARIO CONFIGURATION'),
-                    const Text('TARGET ZONE', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700, fontSize: 13)),
+                    const SectionLabel('TEST SETTINGS'),
+                    const Text('AREA', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700, fontSize: 13)),
                     const SizedBox(height: 8),
                     AppCard(child: const Text('$kMonitoredRoom · $kHomeName', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17))),
                     const SizedBox(height: 22),
                     Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                      const Text('SMOKE LEVEL', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700, fontSize: 13)),
+                      const Text('SMOKE READING', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700, fontSize: 13)),
                       Text('${s.simSmoke}', style: mono.copyWith(color: AppColors.orange, fontWeight: FontWeight.w700, fontSize: 17)),
                     ]),
                     SliderTheme(
@@ -77,7 +77,7 @@ class SimulationScreen extends StatelessWidget {
                     const SizedBox(height: 10),
                     AppCard(
                       child: Row(children: [
-                        const Expanded(child: Text('Flame Present', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17))),
+                        const Expanded(child: Text('Fire signs detected', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17))),
                         Switch(
                           value: s.simFlame,
                           activeTrackColor: AppColors.orange,
@@ -91,8 +91,8 @@ class SimulationScreen extends StatelessWidget {
                         const Icon(Icons.info_outline, color: AppColors.grey, size: 20),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: Text('Simulated incidents are marked SIM and kept separate from real incidents.',
-                              style: mono.copyWith(color: AppColors.grey, fontSize: 13)),
+                          child: Text('Test alerts are kept separate from alerts from your safety device.',
+                              style: const TextStyle(color: AppColors.muted, fontSize: 13)),
                         ),
                       ]),
                     ),
@@ -137,7 +137,7 @@ class SimulationScreen extends StatelessWidget {
                             Navigator.pop(context);
                           },
                           icon: const Icon(Icons.play_arrow),
-                          label: const Text('Start Simulation', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                          label: const Text('Start test', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                         ),
                       ),
                     ),

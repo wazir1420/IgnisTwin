@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
 import '../core/app_theme.dart';
 import '../core/formatters.dart';
-import '../core/home_config.dart';
 import '../providers/app_provider.dart';
 import '../widgets/app_card.dart';
 import '../widgets/icon_box.dart';
@@ -18,7 +17,12 @@ class SensorsScreen extends StatefulWidget {
 
 class _SensorsScreenState extends State<SensorsScreen> {
   int filter = 0;
-  static const _filters = ['All', 'Smoke', 'Flame', 'Offline'];
+  static const _filters = [
+    'All checks',
+    'Smoke',
+    'Fire',
+    'Needs connection',
+  ];
 
   @override
   Widget build(BuildContext context) => Consumer<AppProvider>(
@@ -33,10 +37,10 @@ class _SensorsScreenState extends State<SensorsScreen> {
           _card(
             icon: Icons.local_fire_department,
             iconColor: s.flame ? AppColors.red : AppColors.muted,
-            id: kFlameSensorId,
-            loc: '$kMonitoredRoom · Flame sensor',
+            title: 'Fire signs',
+            detail: 'Checks for signs of fire in the monitored area',
             online: on,
-            value: s.flame ? 'DETECTED' : 'CLEAR',
+            value: s.flame ? 'Detected' : 'None',
             valueColor: s.flame ? AppColors.red : AppColors.text,
             ago: on ? null : ago(s.lastUpdate),
           ),
@@ -50,10 +54,10 @@ class _SensorsScreenState extends State<SensorsScreen> {
             iconColor: s.smoke >= s.smokeThreshold
                 ? AppColors.red
                 : AppColors.muted,
-            id: kSmokeSensorId,
-            loc: '$kMonitoredRoom · Smoke sensor',
+            title: 'Smoke level',
+            detail: 'Air conditions in the monitored area',
             online: on,
-            value: '${s.smoke}',
+            value: s.smoke >= s.smokeThreshold ? 'High' : 'Normal',
             valueColor: s.smoke >= s.smokeThreshold
                 ? AppColors.red
                 : AppColors.text,
@@ -66,7 +70,7 @@ class _SensorsScreenState extends State<SensorsScreen> {
         padding: const EdgeInsets.all(20),
         children: [
           const Text(
-            'Sensors',
+            'Safety checks',
             style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 16),
@@ -74,12 +78,12 @@ class _SensorsScreenState extends State<SensorsScreen> {
             children: [
               _dot(AppColors.green),
               Text(
-                ' ${s.onlineCount} Online   ',
+                ' ${s.onlineCount} working   ',
                 style: mono.copyWith(color: AppColors.muted),
               ),
               _dot(AppColors.grey),
               Text(
-                ' ${s.offlineCount} Offline',
+                ' ${s.offlineCount} not connected',
                 style: mono.copyWith(color: AppColors.muted),
               ),
             ],
@@ -88,7 +92,7 @@ class _SensorsScreenState extends State<SensorsScreen> {
             const SizedBox(height: 12),
             const AppCard(
               child: Text(
-                'No devices are assigned to your account yet. Ask the administrator to assign a live device.',
+                'No safety device is linked to your account yet. Please ask your administrator to connect one.',
                 style: TextStyle(color: AppColors.muted),
               ),
             ),
@@ -97,7 +101,7 @@ class _SensorsScreenState extends State<SensorsScreen> {
             const SizedBox(height: 12),
             AppCard(
               child: Text(
-                s.lastError!,
+                'We cannot reach your safety device. Check that it has power and Wi-Fi, then try again.\nDetails: ${s.lastError}',
                 style: const TextStyle(color: AppColors.orange, fontSize: 12),
               ),
             ),
@@ -108,7 +112,7 @@ class _SensorsScreenState extends State<SensorsScreen> {
           if (items.isEmpty)
             const AppCard(
               child: Text(
-                'No sensors match this filter',
+                'There are no checks to show here.',
                 style: TextStyle(color: AppColors.muted),
               ),
             ),
@@ -127,8 +131,8 @@ class _SensorsScreenState extends State<SensorsScreen> {
   Widget _card({
     required IconData icon,
     required Color iconColor,
-    required String id,
-    required String loc,
+    required String title,
+    required String detail,
     required bool online,
     required String value,
     required Color valueColor,
@@ -152,15 +156,15 @@ class _SensorsScreenState extends State<SensorsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    id,
-                    style: mono.copyWith(
+                    title,
+                    style: const TextStyle(
                       fontWeight: FontWeight.w800,
-                      fontSize: 15,
+                      fontSize: 16,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    loc,
+                    detail,
                     style: const TextStyle(
                       color: AppColors.muted,
                       fontSize: 13,
@@ -173,8 +177,8 @@ class _SensorsScreenState extends State<SensorsScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 online
-                    ? const Pill('ONLINE', AppColors.green, dot: true)
-                    : const Pill('OFFLINE', AppColors.grey, dot: true),
+                    ? const Pill('CONNECTED', AppColors.green, dot: true)
+                    : const Pill('NO SIGNAL', AppColors.grey, dot: true),
                 const SizedBox(height: 8),
                 Text(
                   online ? value : (ago ?? '--'),

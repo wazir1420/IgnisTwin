@@ -12,9 +12,9 @@ extension RiskLevelX on RiskLevel {
       };
 
   String get label => switch (this) {
-        RiskLevel.normal => 'NORMAL',
-        RiskLevel.warning => 'WARNING',
-        RiskLevel.critical => 'CRITICAL',
-        RiskLevel.unknown => 'UNKNOWN',
+        RiskLevel.normal => 'All clear',
+        RiskLevel.warning => 'Check conditions',
+        RiskLevel.critical => 'Take action',
+        RiskLevel.unknown => 'No reading',
       };
 }

@@ -287,7 +287,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               const SizedBox(height: 4),
                               const Text(
-                                'Secure Access Portal',
+                                'Sign in to your account',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w800,
@@ -317,7 +317,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 22),
                     Text(
-                      isSignUp ? 'Request organization access' : 'Welcome back',
+                      isSignUp ? 'Create an access request' : 'Welcome back',
                       style: const TextStyle(
                         fontSize: 27,
                         fontWeight: FontWeight.w800,
@@ -325,7 +325,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 10),
                     const Text(
-                      'Smoke and fire detection monitoring workspace',
+                      'Stay informed about smoke and fire alerts.',
                       style: TextStyle(color: AppColors.muted, fontSize: 15),
                     ),
                     const SizedBox(height: 18),

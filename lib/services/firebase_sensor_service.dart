@@ -6,16 +6,6 @@ import '../core/app_config.dart';
 import '../models/sensor_reading.dart';
 import 'sensor_service.dart';
 
-/// ESP32 -> devices/{deviceId}/sensordata; user assignment -> users/{uid}/devices
-///
-/// Database mein ye data hona chahiye:
-///   `devices/{deviceId}/sensordata: { flame, smoke, lastSeen }`
-///
-/// Parsing flexible hai: flame 0/1 ya "true"/"false" bhi chalega, smoke string
-/// bhi chalega, aur lastSeen seconds mein ho to bhi theek.
-///
-/// Firebase ka listener (onValue) real time mein naya data khud push karta hai.
-/// Provider har second read() bulata hai aur yahan se latest value mil jati hai.
 class FirebaseSensorService implements SensorService {
   FirebaseSensorService(this.userUid, {required this.onSensorCountChanged}) {
     final db = FirebaseDatabase.instanceFor(
@@ -49,8 +39,8 @@ class FirebaseSensorService implements SensorService {
 
   bool? _flame;
   int _smoke = 0;
-  int? _lastSeenMs; // ESP32 ne data kab bheja (server time)
-  int _offsetMs = 0; // phone ki clock aur Firebase server ki clock ka farq
+  int? _lastSeenMs;
+  int _offsetMs = 0;
   String? _lastError;
   int _sensorCount = 0;
 
@@ -99,7 +89,6 @@ class FirebaseSensorService implements SensorService {
     if (enabledIds.isEmpty || _flame != null) _completeFirstEvent();
   }
 
-  /// Device readings ka raw value -> flame + smoke + lastSeen.
   void _apply(Map<String, dynamic> readingsByDevice) {
     Map? latestReadings;
     int latestTimestamp = -1;
@@ -152,7 +141,7 @@ class FirebaseSensorService implements SensorService {
     if (_pick(raw, const ['flame', 'flameDetected', 'fire']) != null) {
       return raw;
     }
-    // Nested (per-device) structure: pehla child jo reading rakhta ho
+
     for (final child in raw.values) {
       if (child is Map &&
           _pick(child, const ['flame', 'flameDetected', 'fire']) != null) {
@@ -162,7 +151,6 @@ class FirebaseSensorService implements SensorService {
     return null;
   }
 
-  /// Case-insensitive key lookup (ESP32 code mein "Flame" / "flame" dono ho sakta hai).
   static dynamic _pick(Map map, List<String> names) {
     for (final n in names) {
       if (map.containsKey(n)) return map[n];
@@ -204,20 +192,18 @@ class FirebaseSensorService implements SensorService {
     return 0;
   }
 
-  /// lastSeen seconds mein bhi bheja gaya ho to ms mein badal dete hain.
   static int? _asMillis(dynamic v) {
     final n = v is num
         ? v.toInt()
         : (v is String ? int.tryParse(v.trim()) : null);
     if (n == null || n <= 0) return null;
-    if (n > 100000000000) return n; // already milliseconds
-    if (n > 1000000000) return n * 1000; // seconds
-    return null; // kuch samajh nahi aaya
+    if (n > 100000000000) return n;
+    if (n > 1000000000) return n * 1000;
+    return null;
   }
 
   @override
   Future<SensorReading> read() async {
-    // Pehla jawab aane tak thora intezar (max 3 second), phir hi offline maanein
     if (!_firstEvent.isCompleted) {
       await _firstEvent.future.timeout(
         const Duration(seconds: 3),
@@ -238,7 +224,7 @@ class FirebaseSensorService implements SensorService {
     if (ls != null) {
       final serverNow = DateTime.now().millisecondsSinceEpoch + _offsetMs;
       if (serverNow - ls > kStaleAfterMs) {
-        throw Exception('ESP32 ne kaafi der se data nahi bheja (offline)');
+        throw Exception('The device has not sent a reading recently.');
       }
     }
     return SensorReading(flame: flame, smoke: _smoke, time: DateTime.now());

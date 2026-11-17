@@ -39,12 +39,12 @@ class IncidentScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 14),
                         Text(
-                          inc.id,
-                          style: mono.copyWith(color: AppColors.muted),
+                          'Alert details',
+                          style: const TextStyle(color: AppColors.muted),
                         ),
                         const Spacer(),
                         isActive
-                            ? const Pill('ACTIVE', AppColors.red)
+                            ? const Pill('ACTIVE ALERT', AppColors.red)
                             : const Pill('CLOSED', AppColors.green),
                       ],
                     ),
@@ -64,7 +64,7 @@ class IncidentScreen extends StatelessWidget {
                               ),
                               const SizedBox(width: 10),
                               Text(
-                                'CRITICAL',
+                                'TAKE ACTION',
                                 style: mono.copyWith(
                                   color: AppColors.red,
                                   fontWeight: FontWeight.w700,
@@ -76,7 +76,7 @@ class IncidentScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 14),
                           const Text(
-                            'Confirmed high-risk condition',
+                            'Possible fire or smoke danger',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.w700,
@@ -107,7 +107,7 @@ class IncidentScreen extends StatelessWidget {
                       children: [
                         Expanded(
                           child: _box(
-                            'FIRE PROBABILITY',
+                            'ESTIMATED FIRE RISK',
                             '${(risk * 100).round()}%',
                           ),
                         ),
@@ -121,15 +121,15 @@ class IncidentScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SectionLabel('SENSOR EVIDENCE'),
+                    const SectionLabel('WHAT WAS DETECTED'),
                     AppCard(
                       padding: EdgeInsets.zero,
                       child: Column(
                         children: [
                           _row(
                             Icons.air,
-                            'Smoke Density',
-                            '${s.smoke}',
+                            'Smoke level',
+                            s.smoke >= s.smokeThreshold ? 'High' : 'Normal',
                             s.smoke >= s.smokeThreshold
                                 ? AppColors.red
                                 : AppColors.text,
@@ -138,8 +138,8 @@ class IncidentScreen extends StatelessWidget {
                           const Divider(height: 1, color: AppColors.border),
                           _row(
                             Icons.local_fire_department_outlined,
-                            'Flame Detected',
-                            s.flame ? 'YES' : 'NO',
+                            'Fire signs',
+                            s.flame ? 'Detected' : 'Not detected',
                             s.flame ? AppColors.red : AppColors.green,
                           ),
                         ],
@@ -157,7 +157,7 @@ class IncidentScreen extends StatelessWidget {
                           SizedBox(width: 14),
                           Expanded(
                             child: Text(
-                              'View on Digital Twin',
+                              'View home map',
                               style: TextStyle(fontSize: 16),
                             ),
                           ),
@@ -179,7 +179,7 @@ class IncidentScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           const Text(
-                            'Evacuate $kMonitoredRoom immediately and leave the house through the main door.',
+                            'If you see fire or heavy smoke, leave immediately and call your local emergency services. Do not go back inside.',
                             style: TextStyle(
                               color: AppColors.muted,
                               fontSize: 16,
@@ -188,7 +188,7 @@ class IncidentScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 10),
                           Text(
-                            'Recommended based on currently available sensor information.',
+                            'This alert may not always be accurate. Your safety comes first.',
                             style: mono.copyWith(
                               color: AppColors.grey,
                               fontSize: 12,
@@ -226,7 +226,7 @@ class IncidentScreen extends StatelessWidget {
                       ),
                     if (inc.simulated)
                       Text(
-                        'This incident was generated in Simulation Mode.',
+                        'This alert was created during a test.',
                         style: mono.copyWith(
                           color: AppColors.orange,
                           fontSize: 12,

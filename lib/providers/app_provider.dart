@@ -14,39 +14,39 @@ import '../services/sensor_service.dart';
 class AppProvider extends ChangeNotifier {
   static const _offlineAlertFailureThreshold = 10;
 
-  /// firebaseReady = Firebase.initializeApp kamyab hua ya nahi.
-  /// Kamyab na ho to app dummy data nahi dikhati, sensors OFFLINE dikhate hain.
+
+
   AppProvider({this.firebaseReady = false}) : source = DataSource.firebase {
     _service = _create(source);
   }
 
   final bool firebaseReady;
 
-  // ---- data source ----
+
   late SensorService _service;
   DataSource source;
-  String espIp = '192.168.1.50'; // sirf DataSource.esp32 (local WiFi) ke liye
-  int smokeThreshold = 1500; // ESP32 ADC (0-4095)
+  String espIp = '192.168.1.50';
+  int smokeThreshold = 1500;
   int _assignedSensorCount = 0;
 
-  // ---- manual simulation (slider wali screen) ----
+
   bool simulation = false;
   bool simFlame = true;
   int simSmoke = 2000;
 
-  // ---- latest sensor data ----
+
   bool online = false;
   bool liveFlame = false;
   int liveSmoke = 0;
   DateTime? lastUpdate;
 
-  /// Aakhri failure ki wajah (sensors screen par dikhti hai) — masla debug karne ke liye
+
   String? lastError;
   int _fails = 0;
   bool _busy = false;
   bool _offlineAlerted = false;
 
-  // ---- user session ----
+
   String currentUserRole = 'user';
   String currentUserName = 'Operator';
   String currentUserEmail = '';
@@ -96,7 +96,7 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ---- history ----
+
   final List<AlertItem> alerts = [];
   final List<Incident> incidents = [];
   Incident? active;
@@ -104,14 +104,14 @@ class AppProvider extends ChangeNotifier {
   int _counter = 140;
   Timer? _timer;
 
-  // ---- bottom navigation ----
+
   int tab = 0;
   void setTab(int i) {
     tab = i;
     notifyListeners();
   }
 
-  // ---- derived values ----
+
   bool get flame => simulation ? simFlame : liveFlame;
   int get smoke => simulation ? simSmoke : liveSmoke;
   bool get sensorsOnline => simulation || online;
@@ -123,7 +123,7 @@ class AppProvider extends ChangeNotifier {
   int get onlineCount => sensorsOnline ? totalSensorCount : 0;
   int get offlineCount => totalSensorCount - onlineCount;
 
-  /// Fire probability (0..1): flame 60% + smoke 40%
+
   double get risk {
     final s = (smoke / smokeThreshold).clamp(0.0, 1.0).toDouble();
     return (flame ? 0.6 : 0.0) + 0.4 * s;
@@ -138,7 +138,7 @@ class AppProvider extends ChangeNotifier {
 
   int get unreadCount => alerts.where((a) => !a.read).length;
 
-  // ---- lifecycle ----
+
   void start() {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => _poll());
@@ -154,7 +154,7 @@ class AppProvider extends ChangeNotifier {
     super.dispose();
   }
 
-  // ---- settings ----
+
   SensorService _create(DataSource s) => switch (s) {
     DataSource.firebase =>
       firebaseReady && currentUserId.isNotEmpty
@@ -190,7 +190,7 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ---- polling ----
+
   Future<void> _poll() async {
     if (_busy) return;
     _busy = true;
@@ -233,8 +233,8 @@ class AppProvider extends ChangeNotifier {
         _offlineAlerted = true;
         _addAlert(
           RiskLevel.unknown,
-          'Sensors offline',
-          '$kMonitoredRoom · sensor health check failed',
+          'Safety device has lost connection',
+          'Check power and Wi-Fi for $kMonitoredRoom.',
         );
       }
     } else {
@@ -247,24 +247,24 @@ class AppProvider extends ChangeNotifier {
           simulation,
         );
         inc.timeline.add(
-          TimelineEntry('Fire probability reached ${(risk * 100).round()}%'),
+          TimelineEntry('Estimated fire risk reached ${(risk * 100).round()}%'),
         );
-        inc.timeline.add(TimelineEntry('Incident ${inc.id} generated'));
-        if (flame) inc.timeline.add(TimelineEntry('Flame detected'));
+        inc.timeline.add(TimelineEntry('Alert started'));
+        if (flame) inc.timeline.add(TimelineEntry('Fire signs detected'));
         incidents.insert(0, inc);
         active = inc;
         _addAlert(
           RiskLevel.critical,
-          'Fire alert — $kMonitoredRoom',
+          'Possible fire danger — $kMonitoredRoom',
           flame
-              ? '$kMonitoredRoom · Flame confirmed'
-              : '$kMonitoredRoom · High smoke level',
+              ? 'Fire signs detected'
+              : 'Smoke level is high',
         );
       } else if (l == RiskLevel.warning && _prev == RiskLevel.normal) {
         _addAlert(
           RiskLevel.warning,
-          'Smoke rising — $kMonitoredRoom',
-          '$kMonitoredRoom · Smoke $smoke',
+          'Smoke level is rising — $kMonitoredRoom',
+          'Check the air in $kMonitoredRoom.',
         );
       } else if (l == RiskLevel.normal && active != null) {
         final inc = active!;
@@ -272,8 +272,8 @@ class AppProvider extends ChangeNotifier {
         inc.timeline.add(TimelineEntry('Conditions returned to normal'));
         _addAlert(
           RiskLevel.normal,
-          'Incident ${inc.id} closed',
-          '$kMonitoredRoom · ${inc.acknowledged ? "Acknowledged" : "Auto-resolved"}',
+          'Conditions are back to normal',
+          '$kMonitoredRoom · Alert closed',
           resolved: true,
         );
         active = null;
@@ -284,20 +284,20 @@ class AppProvider extends ChangeNotifier {
   }
 
   void _addAlert(RiskLevel l, String t, String s, {bool resolved = false}) {
-    // Device par turant notification (FCM/sender ke bagair bhi)
+
     PushService.showAlert(t, s);
     alerts.insert(
       0,
-      AlertItem(l, simulation ? '[SIM] $t' : t, s, resolved: resolved),
+      AlertItem(l, simulation ? '[TEST] $t' : t, s, resolved: resolved),
     );
   }
 
-  // ---- actions ----
+
   void acknowledge() {
     final inc = active;
     if (inc == null || inc.acknowledged) return;
     inc.acknowledged = true;
-    inc.timeline.add(TimelineEntry('Incident acknowledged'));
+    inc.timeline.add(TimelineEntry('Alert acknowledged'));
     notifyListeners();
   }
 
@@ -336,7 +336,7 @@ class AppProvider extends ChangeNotifier {
   }
 }
 
-/// Firebase start nahi hua to ye service sirf error deti hai (app OFFLINE dikhati hai)
+
 class _UnavailableService implements SensorService {
   @override
   int get sensorCount => 0;

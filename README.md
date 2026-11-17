@@ -1,6 +1,6 @@
 # IgnisTwin
 
-Flutter smoke/fire monitoring prototype using Firebase Authentication and
+Flutter smoke/fire monitoring app using Firebase Authentication and
 Firebase Realtime Database.
 
 ## Realtime Database structure
@@ -100,5 +100,5 @@ Because unauthenticated direct writes are enabled, anyone who learns the
 database URL and a device ID can forge or overwrite its readings. Use unique,
 non-guessable device IDs and do not expose them publicly. For stronger
 protection, use authenticated devices or a trusted server gateway. This
-prototype is not a certified replacement for listed fire detection or
+This app is not a certified replacement for listed fire detection or
 life-safety systems.

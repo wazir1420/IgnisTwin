@@ -4,7 +4,7 @@ import '../core/app_theme.dart';
 import '../core/home_config.dart';
 import '../models/risk_level.dart';
 
-/// Ghar ka simple floor plan: 3 rooms, sensors sirf monitored room mein.
+
 class FloorPlan extends StatelessWidget {
   final double w, h;
   final RiskLevel lvl;
@@ -46,7 +46,7 @@ class FloorPlan extends StatelessWidget {
         decoration: BoxDecoration(color: c, shape: BoxShape.circle));
 
     return Stack(children: [
-      // Monitored room — yahan dono sensors lage hain, risk isi se aata hai
+
       _room(
         _r(0.03, 0.03, 0.46, 0.44),
         kMonitoredRoom,
@@ -60,12 +60,12 @@ class FloorPlan extends StatelessWidget {
             ? const Icon(Icons.local_fire_department, color: AppColors.red, size: 30)
             : dot(roomCol),
       ),
-      // Baqi do rooms — koi sensor nahi
+
       _room(_r(0.53, 0.03, 0.44, 0.44), kRoomNames[1], AppColors.grey,
-          dashed: true, sub: 'NO SENSOR'),
+          dashed: true, sub: 'Not monitored'),
       _room(_r(0.03, 0.51, 0.94, 0.42), kRoomNames[2], AppColors.grey,
-          dashed: true, sub: 'NO SENSOR'),
-      // Main door / exit
+          dashed: true, sub: 'Not monitored'),
+
       Positioned.fromRect(
         rect: _r(0.42, 0.93, 0.16, 0.03),
         child: Container(color: AppColors.green.withValues(alpha: 0.5)),

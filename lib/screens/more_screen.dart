@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/app_colors.dart';
 import '../core/app_theme.dart';
+import '../core/formatters.dart';
+import '../core/home_config.dart';
 import '../models/data_source.dart';
 import '../providers/app_provider.dart';
 import '../services/auth_service.dart';
@@ -25,11 +27,15 @@ class MoreScreen extends StatelessWidget {
           style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 18),
+        _overviewCard(p),
+        const SizedBox(height: 6),
+        _hardwareCard(),
+        const SizedBox(height: 6),
         if (p.isAdmin)
           _tile(
             Icons.science_outlined,
-            'Simulation Mode',
-            'Test alerts with sliders',
+            'Test alerts',
+            'Try sample fire and smoke alerts',
             AppColors.orange,
             () => Navigator.push(
               context,
@@ -54,7 +60,7 @@ class MoreScreen extends StatelessWidget {
                       const SizedBox(width: 14),
                       const Expanded(
                         child: Text(
-                          'Data source',
+                          'Sensor connection',
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 16,
@@ -80,9 +86,9 @@ class MoreScreen extends StatelessWidget {
                   Text(
                     switch (p.source) {
                       DataSource.firebase =>
-                        'Real sensors via Firebase Realtime Database.',
+                        'Readings sent through your online account.',
                       DataSource.esp32 =>
-                        'Direct local WiFi connection to ESP32.',
+                        'Readings sent directly over the local Wi-Fi network.',
                     },
                     style: const TextStyle(
                       color: AppColors.muted,
@@ -96,8 +102,8 @@ class MoreScreen extends StatelessWidget {
         if (p.isAdmin)
           _tile(
             Icons.router_outlined,
-            'ESP32 / Smoke settings',
-            'Local IP & smoke threshold',
+            'Device settings',
+            'Wi-Fi address and alert level',
             AppColors.cyan,
             () => _settings(context),
           ),
@@ -126,12 +132,169 @@ class MoreScreen extends StatelessWidget {
         }),
         const SizedBox(height: 20),
         Text(
-          'Academic prototype v1.0. Not a certified fire alarm.',
+          'For extra awareness only. Do not rely on this app as a certified fire alarm.',
           style: mono.copyWith(color: AppColors.grey, fontSize: 12),
         ),
       ],
     );
   }
+
+  Widget _overviewCard(AppProvider p) => AppCard(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionHeading(
+          icon: Icons.monitor_heart_outlined,
+          title: 'Monitoring overview',
+          color: AppColors.cyan,
+        ),
+        const SizedBox(height: 16),
+        _detailRow(
+          Icons.wifi_tethering,
+          'Connection',
+          p.simulation
+              ? 'Test alerts'
+              : p.totalSensorCount == 0
+              ? 'No device assigned'
+              : p.sensorsOnline
+              ? 'Connected'
+              : 'Waiting for device readings',
+          p.sensorsOnline ? AppColors.green : AppColors.orange,
+        ),
+        _detailRow(
+          Icons.sensors_outlined,
+          'Safety checks',
+          '${p.totalSensorCount} checks · ${p.totalSensorCount ~/ 2} device${p.totalSensorCount ~/ 2 == 1 ? '' : 's'}',
+          AppColors.cyan,
+        ),
+        _detailRow(
+          Icons.notifications_active_outlined,
+          'Active alerts',
+          p.active == null ? 'None' : '1 · Fire response active',
+          p.active == null ? AppColors.green : AppColors.red,
+        ),
+        _detailRow(
+          Icons.update,
+          'Last reading',
+          ago(p.lastUpdate),
+          AppColors.muted,
+        ),
+        _detailRow(
+          Icons.meeting_room_outlined,
+          'Monitored area',
+          '$kHomeName · $kMonitoredRoom',
+          AppColors.muted,
+          last: true,
+        ),
+      ],
+    ),
+  );
+
+  Widget _hardwareCard() => AppCard(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionHeading(
+          icon: Icons.memory_outlined,
+          title: 'Your safety devices',
+          color: AppColors.orange,
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Your connected device watches for fire signs and changes in the air.',
+          style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.4),
+        ),
+        const SizedBox(height: 14),
+        _hardwareItem(
+          icon: Icons.developer_board_outlined,
+          title: 'Wireless safety device',
+          detail: 'Sends new readings over Wi-Fi about every 2 seconds.',
+          color: AppColors.cyan,
+        ),
+        _hardwareItem(
+          icon: Icons.local_fire_department_outlined,
+          title: 'Fire detector',
+          detail: 'Looks for signs of an open flame in the monitored area.',
+          color: AppColors.red,
+        ),
+        _hardwareItem(
+          icon: Icons.cloud_outlined,
+          title: 'Smoke and gas detector',
+          detail:
+              'MQ-2 model. Checks the air for smoke and certain gases; it may need time to warm up.',
+          color: AppColors.orange,
+        ),
+        _hardwareItem(
+          icon: Icons.sync,
+          title: 'Updates',
+          detail: 'Your device sends new readings about every 2 seconds.',
+          color: AppColors.green,
+          last: true,
+        ),
+      ],
+    ),
+  );
+
+  Widget _hardwareItem({
+    required IconData icon,
+    required String title,
+    required String detail,
+    required Color color,
+    bool last = false,
+  }) => Padding(
+    padding: EdgeInsets.only(bottom: last ? 0 : 14),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: color),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+              const SizedBox(height: 3),
+              Text(
+                detail,
+                style: const TextStyle(
+                  color: AppColors.muted,
+                  fontSize: 12,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _detailRow(
+    IconData icon,
+    String title,
+    String value,
+    Color color, {
+    bool last = false,
+  }) => Padding(
+    padding: EdgeInsets.only(bottom: last ? 0 : 13),
+    child: Row(
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(title, style: const TextStyle(color: AppColors.muted)),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          ),
+        ),
+      ],
+    ),
+  );
 
   Widget _tile(IconData i, String t, String sub, Color c, VoidCallback onTap) =>
       Padding(
@@ -178,21 +341,21 @@ class MoreScreen extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.card,
-        title: const Text('ESP32 connection'),
+        title: const Text('Device connection'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: ip,
               decoration: const InputDecoration(
-                labelText: 'ESP32 IP (e.g. 192.168.1.50)',
+                labelText: 'Device Wi-Fi address',
               ),
             ),
             TextField(
               controller: thr,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                labelText: 'Smoke threshold (0-4095)',
+                labelText: 'Smoke alert level (advanced)',
               ),
             ),
           ],
@@ -213,4 +376,30 @@ class MoreScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+class _SectionHeading extends StatelessWidget {
+  const _SectionHeading({
+    required this.icon,
+    required this.title,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String title;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Icon(icon, color: color, size: 22),
+      const SizedBox(width: 10),
+      Expanded(
+        child: Text(
+          title,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+        ),
+      ),
+    ],
+  );
 }

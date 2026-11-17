@@ -41,16 +41,16 @@ class HomeScreen extends StatelessWidget {
                   Pill(
                     appState.isAdmin
                         ? 'ADMIN'
-                        : appState.currentUserRole.toUpperCase(),
+                        : 'MEMBER',
                     appState.isAdmin ? AppColors.cyan : AppColors.green,
                     dot: true,
                   ),
                   const SizedBox(height: 6),
                   s.simulation
-                      ? const Pill('SIMULATION', AppColors.orange, dot: true)
+                      ? const Pill('TEST MODE', AppColors.orange, dot: true)
                       : s.sensorsOnline
-                      ? const Pill('LIVE', AppColors.green, dot: true)
-                      : const Pill('OFFLINE', AppColors.grey, dot: true),
+                      ? const Pill('CONNECTED', AppColors.green, dot: true)
+                      : const Pill('NO SIGNAL', AppColors.grey, dot: true),
                 ],
               ),
               Stack(
@@ -115,7 +115,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  appState.isAdmin ? 'Command center' : 'Dashboard',
+                  appState.isAdmin ? 'Admin dashboard' : 'Dashboard',
                   style: const TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
@@ -123,15 +123,15 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${appState.currentUserName} · ${appState.currentUserRole}',
+                  appState.currentUserName,
                   style: const TextStyle(color: AppColors.muted, fontSize: 16),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   lvl == RiskLevel.normal
-                      ? '$kRoomCount rooms · all normal'
+                      ? '$kRoomCount rooms · everything looks calm'
                       : lvl == RiskLevel.unknown
-                      ? '$kMonitoredRoom · sensors not responding'
+                      ? '$kMonitoredRoom · safety device not responding'
                       : '$kMonitoredRoom · conditions elevated',
                   style: const TextStyle(color: AppColors.muted, fontSize: 14),
                 ),
@@ -145,7 +145,7 @@ class HomeScreen extends StatelessWidget {
                 child: _stat(
                   Icons.sensors,
                   '${s.onlineCount}',
-                  'Sensors Online',
+                  'Checks working',
                   trailing: '${s.onlineCount}/${s.totalSensorCount}',
                   trailingColor: AppColors.green,
                 ),
@@ -155,7 +155,7 @@ class HomeScreen extends StatelessWidget {
                 child: _stat(
                   Icons.wifi_off,
                   '${s.offlineCount}',
-                  'Sensors Offline',
+                  'Checks not connected',
                 ),
               ),
             ],
@@ -167,7 +167,7 @@ class HomeScreen extends StatelessWidget {
                 child: _stat(
                   Icons.local_fire_department,
                   '${s.active != null ? 1 : 0}',
-                  'Active Incidents',
+                  'Active alerts',
                   iconColor: AppColors.red,
                   valueColor: s.active != null ? AppColors.red : AppColors.text,
                 ),
@@ -177,7 +177,7 @@ class HomeScreen extends StatelessWidget {
                 child: _stat(
                   Icons.location_on_outlined,
                   '${lvl == RiskLevel.critical ? 1 : 0}',
-                  'Critical Zones',
+                  'Areas needing attention',
                 ),
               ),
             ],
@@ -190,7 +190,7 @@ class HomeScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Fire Probability · $kMonitoredRoom',
+                      'Estimated fire risk · $kMonitoredRoom',
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 16,
@@ -219,13 +219,13 @@ class HomeScreen extends StatelessWidget {
               ],
             ),
           ),
-          SectionLabel('ACTIVE INCIDENTS', action: 'View all', onAction: () {}),
+          SectionLabel('ACTIVE ALERTS', action: 'View all', onAction: () {}),
           if (s.active != null)
             _incidentCard(context, s.active!, s.flame)
           else
             const AppCard(
               child: Text(
-                'No active incidents',
+                'No active alerts',
                 style: TextStyle(color: AppColors.muted),
               ),
             ),
@@ -348,7 +348,7 @@ class HomeScreen extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    'CRITICAL',
+                    'TAKE ACTION',
                     style: mono.copyWith(
                       color: AppColors.red,
                       fontWeight: FontWeight.w700,
@@ -356,7 +356,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    inc.id,
+                    inc.simulated ? 'TEST' : 'ALERT',
                     style: mono.copyWith(color: AppColors.grey, fontSize: 12),
                   ),
                 ],
@@ -367,7 +367,7 @@ class HomeScreen extends StatelessWidget {
                 style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
               ),
               Text(
-                '${flame ? "Flame confirmed" : "High smoke"} · ${mmss(inc.duration)} ago',
+                '${flame ? "Fire signs detected" : "High smoke level"} · ${mmss(inc.duration)} ago',
                 style: const TextStyle(color: AppColors.muted),
               ),
             ],

@@ -3,26 +3,26 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-/// FCM topic — sender (ESP32 ya Mac par chalne wala script) isi topic par
-/// message bhejta hai, aur app isi ko subscribe karti hai.
+
+
 const String kAlertTopic = 'home_alerts';
 
-/// Android channel ki settings ek dafa ban jayein to badli nahi ja saktin, is liye
-/// id ke saath version hai. Sound/vibration badalne par id badha dein (v5 -> v6).
+
+
 const String _channelId = 'ignis_alerts_v4';
 const String _channelName = 'Fire alerts';
 
-/// Fixed id — naya alert purane ko replace karta hai. Stack hoti notifications
-/// Android ko "noisy" lagti hain aur wo app ka sound mute kar deta hai.
+
+
 const int _alertNotificationId = 1001;
 
-/// Sender ki taraf se aane wala message jab app band ho.
+
 @pragma('vm:entry-point')
 Future<void> _backgroundHandler(RemoteMessage message) async {
   debugPrint('FCM (background): ${message.notification?.title}');
 }
 
-/// Notifications: channel + alert sound + FCM receive.
+
 class PushService {
   static final FlutterLocalNotificationsPlugin _local =
       FlutterLocalNotificationsPlugin();
@@ -38,7 +38,7 @@ class PushService {
   static bool get _isAndroid =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
-  /// Channel + notification permission. Firebase ke bagair bhi chalta hai.
+
   static Future<void> initLocal() async {
     if (_localReady || !_isAndroid) return;
     _localReady = true;
@@ -72,8 +72,8 @@ class PushService {
     await android?.requestNotificationsPermission();
   }
 
-  /// Alert ki aawaz app khud bajata hai, is liye OEM ki notification-sound
-  /// policies asar nahi karti.
+
+
   static Future<void> _playAlertSound() async {
     try {
       await _player.stop();
@@ -83,11 +83,11 @@ class PushService {
     }
   }
 
-  /// Alert notification + beep.
+
   static Future<void> showAlert(String title, String body) async {
     if (!_isAndroid) return;
 
-    // Wahi alert 15 second ke andar dobara na dikhayein (spam guard).
+
     final now = DateTime.now();
     if (title == _lastTitle &&
         body == _lastBody &&
@@ -125,8 +125,8 @@ class PushService {
     }
   }
 
-  /// FCM receive — app band ho tab bhi push aa sake. Koi sender na ho to
-  /// ye quietly kuch nahi karta.
+
+
   static Future<void> initFcm() async {
     if (_fcmStarted) return;
     _fcmStarted = true;

@@ -11,7 +11,7 @@ import 'services/push_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Firebase start. Fail ho jaye to app OFFLINE dikhayegi (dummy data nahi).
+
   var firebaseReady = true;
   if (!DefaultFirebaseOptions.isConfigured) {
     firebaseReady = false;
@@ -22,9 +22,9 @@ Future<void> main() async {
   } else {
     try {
       if (defaultTargetPlatform == TargetPlatform.android) {
-        // Android: google-services.json + Gradle plugin native [DEFAULT] app khud
-        // bana dete hain. Bina options wali call maujooda app ko use karti hai —
-        // naya banane ki koshish nahi karti, is liye duplicate-app nahi aata.
+
+
+
         await Firebase.initializeApp();
         debugPrint('Firebase initialized (google-services.json)');
       } else {
@@ -34,12 +34,12 @@ Future<void> main() async {
         debugPrint('Firebase initialized');
       }
     } catch (e) {
-      // Android par google-services.json/Gradle plugin native [DEFAULT] app pehle
-      // hi bana deta hai — "duplicate-app" ka matlab app already ready hai.
+
+
       if ('$e'.contains('duplicate-app')) {
         debugPrint('Firebase already initialized (google-services.json)');
       } else {
-        // Koi aur error ho, lekin default app phir bhi maujood ho to chalne dein
+
         try {
           Firebase.app();
           debugPrint('Firebase app pehle se maujood hai: $e');
@@ -51,14 +51,14 @@ Future<void> main() async {
     }
   }
 
-  // Notifications ka channel/permission (Firebase ke bagair bhi chalta hai)
+
   try {
     await PushService.initLocal();
   } catch (e) {
     debugPrint('Local notification setup failed: $e');
   }
 
-  // FCM: push receive (sirf Firebase ready ho to)
+
   if (firebaseReady) {
     try {
       await PushService.initFcm();

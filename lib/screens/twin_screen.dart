@@ -16,67 +16,149 @@ class TwinScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Consumer<AppProvider>(
-        builder: (context, appState, _) {
-          final s = appState;
-          final lvl = s.level;
-          final col = lvl.color;
-          return ListView(padding: const EdgeInsets.all(20), children: [
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              const Text('Digital Twin', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800)),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
-                child: const Text(kHomeName, style: TextStyle(fontWeight: FontWeight.w700)),
+    builder: (context, appState, _) {
+      final s = appState;
+      final lvl = s.level;
+      final col = lvl.color;
+      return ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Home map',
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
               ),
-            ]),
-            const SizedBox(height: 10),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: const Text(
+                  kHomeName,
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
               s.simulation
-                  ? Text('● SIMULATION', style: mono.copyWith(color: AppColors.orange, fontWeight: FontWeight.w700))
-                  : Text('● LIVE', style: mono.copyWith(color: s.sensorsOnline ? AppColors.green : AppColors.grey, fontWeight: FontWeight.w700)),
-              Text('Synced ${ago(s.lastUpdate)}', style: mono.copyWith(color: AppColors.grey, fontSize: 13)),
-            ]),
-            const SizedBox(height: 12),
-            AppCard(
-              padding: const EdgeInsets.all(12),
-              child: AspectRatio(
-                aspectRatio: 0.98,
-                child: LayoutBuilder(builder: (_, box) => FloorPlan(box.maxWidth, box.maxHeight, lvl, s.flame)),
+                  ? Text(
+                      '● TEST MODE',
+                      style: mono.copyWith(
+                        color: AppColors.orange,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    )
+                  : Text(
+                      s.sensorsOnline ? '● CONNECTED' : '● NO SIGNAL',
+                      style: mono.copyWith(
+                        color: s.sensorsOnline
+                            ? AppColors.green
+                            : AppColors.grey,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+              Text(
+                'Last update ${ago(s.lastUpdate)}',
+                style: mono.copyWith(color: AppColors.grey, fontSize: 13),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          AppCard(
+            padding: const EdgeInsets.all(12),
+            child: AspectRatio(
+              aspectRatio: 0.98,
+              child: LayoutBuilder(
+                builder: (_, box) =>
+                    FloorPlan(box.maxWidth, box.maxHeight, lvl, s.flame),
               ),
             ),
-            const SizedBox(height: 12),
-            Wrap(spacing: 14, runSpacing: 6, children: [
-              _legend(AppColors.green, 'NORMAL'),
-              _legend(AppColors.yellow, 'WARNING'),
-              _legend(AppColors.red, 'CRITICAL'),
-              _legend(AppColors.grey, 'UNKNOWN'),
-              _legend(AppColors.cyan, 'ROUTE'),
-            ]),
-            const SizedBox(height: 6),
-            Text('$kMonitoredRoom has the flame + smoke sensor. Other rooms are not monitored.',
-                style: mono.copyWith(color: AppColors.grey, fontSize: 11)),
-            const SizedBox(height: 16),
-            AppCard(
-              border: col.withValues(alpha: 0.5),
-              padding: const EdgeInsets.all(18),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  const Text(kMonitoredRoom, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
-                  Pill(lvl.label, col),
-                ]),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 14,
+            runSpacing: 6,
+            children: [
+              _legend(AppColors.green, 'All clear'),
+              _legend(AppColors.yellow, 'Check conditions'),
+              _legend(AppColors.red, 'Take action'),
+              _legend(AppColors.grey, 'No reading'),
+              _legend(AppColors.cyan, 'Exit route'),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Fire and smoke checks are active in $kMonitoredRoom only.',
+            style: const TextStyle(color: AppColors.muted, fontSize: 12),
+          ),
+          const SizedBox(height: 16),
+          AppCard(
+            border: col.withValues(alpha: 0.5),
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      kMonitoredRoom,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Pill(lvl.label, col),
+                  ],
+                ),
                 const SizedBox(height: 16),
-                Row(children: [
-                  _metric('FLAME', s.flame ? 'YES' : 'NO', s.flame ? AppColors.red : AppColors.green),
-                  _metric('SMOKE', '${s.smoke}', s.smoke >= s.smokeThreshold ? AppColors.red : AppColors.text),
-                  _metric('RISK', (s.risk).toStringAsFixed(2), col),
-                ]),
+                Row(
+                  children: [
+                    _metric(
+                      'Fire signs',
+                      s.flame ? 'Detected' : 'None',
+                      s.flame ? AppColors.red : AppColors.green,
+                    ),
+                    _metric(
+                      'Smoke level',
+                      s.smoke >= s.smokeThreshold ? 'High' : 'Normal',
+                      s.smoke >= s.smokeThreshold
+                          ? AppColors.red
+                          : AppColors.text,
+                    ),
+                    _metric(
+                      'Estimated risk',
+                      '${(s.risk * 100).round()}%',
+                      col,
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 14),
-                Row(children: [
-                  const Icon(Icons.schedule, color: AppColors.muted, size: 20),
-                  const SizedBox(width: 8),
-                  Text('Updated ${ago(s.lastUpdate)} · ${s.sensorsOnline ? "Sensor healthy" : "Sensor offline"}',
-                      style: const TextStyle(color: AppColors.muted)),
-                ]),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.schedule,
+                      color: AppColors.muted,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Updated ${ago(s.lastUpdate)} · ${s.sensorsOnline ? "Device connected" : "No device signal"}',
+                      style: const TextStyle(color: AppColors.muted),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
@@ -86,32 +168,69 @@ class TwinScreen extends StatelessWidget {
                       backgroundColor: AppColors.cyan,
                       foregroundColor: Colors.black,
                       disabledBackgroundColor: AppColors.border,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                     onPressed: s.active == null
                         ? null
-                        : () => Navigator.push(context, MaterialPageRoute(builder: (_) => IncidentScreen(incident: s.active!))),
-                    child: Text(s.active == null ? 'No active incident' : 'View Incident ${s.active!.id}',
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                        : () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  IncidentScreen(incident: s.active!),
+                            ),
+                          ),
+                    child: Text(
+                      s.active == null
+                          ? 'No active alert'
+                          : 'View alert details',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    ),
                   ),
                 ),
-              ]),
+              ],
             ),
-          ]);
-        },
+          ),
+        ],
       );
+    },
+  );
 
-  Widget _legend(Color c, String t) => Row(mainAxisSize: MainAxisSize.min, children: [
-        Container(width: 10, height: 10, decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(2))),
-        const SizedBox(width: 5),
-        Text(t, style: mono.copyWith(color: AppColors.muted, fontSize: 11)),
-      ]);
+  Widget _legend(Color c, String t) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(
+          color: c,
+          borderRadius: BorderRadius.circular(2),
+        ),
+      ),
+      const SizedBox(width: 5),
+      Text(t, style: mono.copyWith(color: AppColors.muted, fontSize: 11)),
+    ],
+  );
 
   Widget _metric(String label, String value, Color c) => Expanded(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: mono.copyWith(color: AppColors.muted, fontSize: 12)),
-          const SizedBox(height: 4),
-          Text(value, style: mono.copyWith(color: c, fontSize: 24, fontWeight: FontWeight.w800)),
-        ]),
-      );
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: mono.copyWith(color: AppColors.muted, fontSize: 12)),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: mono.copyWith(
+            color: c,
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
+    ),
+  );
 }

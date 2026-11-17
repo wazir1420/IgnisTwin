@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
-/// Monospace text style (labels, numbers, IDs)
+
 const mono = TextStyle(fontFamily: 'monospace');
 
 ThemeData buildTheme() => ThemeData(

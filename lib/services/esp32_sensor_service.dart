@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/sensor_reading.dart';
 import 'sensor_service.dart';
 
-/// Real ESP32 se data (ESP32 par WebServer ka /data endpoint chalna chahiye)
+
 class Esp32SensorService implements SensorService {
   final String ip;
   Esp32SensorService(this.ip);

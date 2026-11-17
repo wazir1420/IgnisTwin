@@ -14,53 +14,72 @@ class Shell extends StatelessWidget {
 
   static const _tabs = [
     (Icons.home_outlined, Icons.home, 'Home'),
-    (Icons.layers_outlined, Icons.layers, 'Twin'),
-    (Icons.sensors, Icons.sensors, 'Sensors'),
+    (Icons.layers_outlined, Icons.layers, 'Map'),
+    (Icons.sensors, Icons.sensors, 'Safety'),
     (Icons.notifications_none, Icons.notifications, 'Alerts'),
     (Icons.apps, Icons.apps, 'More'),
   ];
 
   @override
   Widget build(BuildContext context) => Consumer<AppProvider>(
-        builder: (context, st, _) {
-          final i = st.tab;
-          return Scaffold(
-          drawer: const ProfileDrawer(),
-          body: SafeArea(
-            child: IndexedStack(index: i, children: const [
+    builder: (context, st, _) {
+      final i = st.tab;
+      return Scaffold(
+        drawer: const ProfileDrawer(),
+        body: SafeArea(
+          child: IndexedStack(
+            index: i,
+            children: const [
               HomeScreen(),
               TwinScreen(),
               SensorsScreen(),
               AlertsScreen(),
               MoreScreen(),
-            ]),
+            ],
           ),
-          bottomNavigationBar: Container(
-            decoration: const BoxDecoration(
-              color: AppColors.card,
-              border: Border(top: BorderSide(color: AppColors.border)),
-            ),
-            child: SafeArea(
-              child: Row(children: [
+        ),
+        bottomNavigationBar: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.card,
+            border: Border(top: BorderSide(color: AppColors.border)),
+          ),
+          child: SafeArea(
+            child: Row(
+              children: [
                 for (var k = 0; k < _tabs.length; k++)
                   Expanded(
                     child: InkWell(
                       onTap: () => st.setTab(k),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: Column(mainAxisSize: MainAxisSize.min, children: [
-                          Icon(k == i ? _tabs[k].$2 : _tabs[k].$1, color: k == i ? AppColors.cyan : AppColors.grey),
-                          const SizedBox(height: 4),
-                          Text(_tabs[k].$3,
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: k == i ? AppColors.cyan : AppColors.grey)),
-                        ]),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              k == i ? _tabs[k].$2 : _tabs[k].$1,
+                              color: k == i ? AppColors.cyan : AppColors.grey,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _tabs[k].$3,
+                              maxLines: 1,
+                              softWrap: false,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: k == i ? AppColors.cyan : AppColors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-              ]),
+              ],
             ),
           ),
-        );
-        },
+        ),
       );
+    },
+  );
 }

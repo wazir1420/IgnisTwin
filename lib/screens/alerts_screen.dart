@@ -40,7 +40,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
               IconBox(Icons.done_all, color: AppColors.text, onTap: appState.markAllRead),
             ]),
             const SizedBox(height: 16),
-            FilterChips(const ['All', 'Unread', 'Critical'], filter, (i) => setState(() => filter = i)),
+            FilterChips(const ['All alerts', 'Unread', 'Needs attention'], filter, (i) => setState(() => filter = i)),
             if (list.isEmpty)
               const Padding(
                 padding: EdgeInsets.only(top: 40),
@@ -56,7 +56,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
   Widget _tile(AlertItem a, AppProvider appState) {
     final col = a.color;
-    final label = a.resolved ? 'RESOLVED' : a.level.label;
+    final label = a.resolved ? 'Back to normal' : a.level.label;
     final icon = a.resolved
         ? Icons.check_circle_outline
         : switch (a.level) {

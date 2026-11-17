@@ -1,27 +1,27 @@
-/*
-  IgnisTwin - ESP32 -> Firebase Realtime Database
-  Aap ke pins:
-    Flame : DO -> GPIO 27, AO -> GPIO 34
-    Smoke : DO -> GPIO 26, AO -> GPIO 35
-  Extra library ki zaroorat nahi.
-*/
+
+
+
+
+
+
+
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
 
-// ====== APNE WIFI / DEVICE KI VALUES BHAREIN ======
+
 const char* WIFI_SSID = "Wazir";
 const char* WIFI_PASS = "wazir@1420";
 const char* DB_URL    = "https://ignistwin-default-rtdb.asia-southeast1.firebasedatabase.app";
 const char* DEVICE_ID = "ESP32-BEDROOM-01";
-// ================================================================
+
 
 #define FLAME_DO 27
 #define FLAME_AO 34
 #define SMOKE_DO 26
 #define SMOKE_AO 35
 
-// Aksar modules detection par LOW dete hain
+
 #define FLAME_ACTIVE LOW
 #define SMOKE_ACTIVE LOW
 
@@ -45,7 +45,7 @@ void setup() {
 
   pinMode(FLAME_DO, INPUT);
   pinMode(SMOKE_DO, INPUT);
-  analogReadResolution(12);   // 0 - 4095
+  analogReadResolution(12);
 
   Serial.println("================================");
   Serial.println("Flame & Smoke Detection System");
@@ -64,7 +64,7 @@ void loop() {
   if (millis() - lastSend < SEND_INTERVAL_MS) return;
   lastSend = millis();
 
-  // ---- readings ----
+
   int flameDigital = digitalRead(FLAME_DO);
   int flameAnalog  = analogRead(FLAME_AO);
   int smokeDigital = digitalRead(SMOKE_DO);
@@ -73,14 +73,14 @@ void loop() {
   bool flame      = (flameDigital == FLAME_ACTIVE);
   bool smokeAlert = (smokeDigital == SMOKE_ACTIVE);
 
-  // ---- serial monitor (calibration ke liye bohat kaam ki) ----
+
   Serial.println("\n------ SENSOR READINGS ------");
   Serial.println("Flame Analog: " + String(flameAnalog) + " | Digital: " + String(flameDigital));
   Serial.println(flame ? "ALERT: FIRE DETECTED!" : "No Fire Detected");
   Serial.println("Smoke Analog: " + String(smokeAnalog) + " | Digital: " + String(smokeDigital));
   Serial.println(smokeAlert ? "ALERT: SMOKE DETECTED!" : "No Smoke Detected");
 
-  // ---- Write device readings; admin assigns this ID to a user ----
+
   String json = "{\"flame\":" + String(flame ? "true" : "false") +
                 ",\"smoke\":" + String(smokeAnalog) +
                 ",\"smokeAlert\":" + String(smokeAlert ? "true" : "false") +

@@ -223,11 +223,22 @@ class AuthService {
       throw const AuthAccessException('Sign in before updating your profile.');
     }
 
-    await _users.child(user.uid).update({
-      'name': name.trim(),
-      'phone': phone.trim(),
-      'photoBase64': photoBase64,
-    });
+    final profile = _users.child(user.uid);
+    try {
+      await Future.wait([
+        profile.child('name').set(name.trim()),
+        profile.child('phone').set(phone.trim()),
+        profile.child('photoBase64').set(photoBase64),
+      ]);
+    } on FirebaseException catch (error) {
+      if (error.code == 'permission-denied') {
+        throw const AuthAccessException(
+          'Firebase rejected the profile update. Publish the latest '
+          'database.rules.json rules, then try again.',
+        );
+      }
+      rethrow;
+    }
   }
 
   Future<void> signOut() => _auth.signOut();

@@ -130,7 +130,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 14),
             Text(
-              'FIRE DETECTION & RESPONSE TWIN',
+              'FIRE & SMOKE SAFETY MONITORING',
               style: mono.copyWith(
                 color: AppColors.muted,
                 letterSpacing: 2.5,
@@ -153,7 +153,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 14),
             Text(
-              'ACADEMIC PROTOTYPE · v1.0',
+              'FIRE & SMOKE SAFETY',
               style: mono.copyWith(
                 color: AppColors.grey,
                 letterSpacing: 2,
