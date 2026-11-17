@@ -4,17 +4,19 @@ import '../models/alert_item.dart';
 import '../models/data_source.dart';
 import '../models/incident.dart';
 import '../models/risk_level.dart';
-import '../services/dummy_sensor_service.dart';
+import '../models/sensor_reading.dart';
 import '../services/esp32_sensor_service.dart';
 import '../services/firebase_sensor_service.dart';
 import '../services/sensor_service.dart';
 
 class AppProvider extends ChangeNotifier {
-  /// firebaseReady = Firebase.initializeApp kamyab hua ya nahi
-  AppProvider({bool firebaseReady = false})
-      : source = firebaseReady ? DataSource.firebase : DataSource.dummy {
+  /// firebaseReady = Firebase.initializeApp kamyab hua ya nahi.
+  /// Kamyab na ho to app dummy data nahi dikhati, sensors OFFLINE dikhate hain.
+  AppProvider({this.firebaseReady = false}) : source = DataSource.firebase {
     _service = _create(source);
   }
+
+  final bool firebaseReady;
 
   // ---- data source ----
   late SensorService _service;
@@ -32,6 +34,8 @@ class AppProvider extends ChangeNotifier {
   bool liveFlame = false;
   int liveSmoke = 0;
   DateTime? lastUpdate;
+  /// Aakhri failure ki wajah (sensors screen par dikhti hai) — masla debug karne ke liye
+  String? lastError;
   int _fails = 0;
   bool _busy = false;
   bool _offlineAlerted = false;
@@ -90,10 +94,10 @@ class AppProvider extends ChangeNotifier {
 
   // ---- settings ----
   SensorService _create(DataSource s) => switch (s) {
-        DataSource.dummy => DummySensorService(),
-        DataSource.firebase => FirebaseSensorService(),
-        DataSource.esp32 => Esp32SensorService(espIp),
-      };
+    DataSource.firebase =>
+      firebaseReady ? FirebaseSensorService() : _UnavailableService(),
+    DataSource.esp32 => Esp32SensorService(espIp),
+  };
 
   void setSource(DataSource s) {
     if (s == source) return;
@@ -129,7 +133,9 @@ class AppProvider extends ChangeNotifier {
         _fails = 0;
         _offlineAlerted = false;
         lastUpdate = r.time;
-      } catch (_) {
+        lastError = null;
+      } catch (e) {
+        lastError = '$e';
         _fails++;
         if (_fails >= 2) online = false;
       }
@@ -146,28 +152,51 @@ class AppProvider extends ChangeNotifier {
     if (!sensorsOnline) {
       if (!_offlineAlerted) {
         _offlineAlerted = true;
-        _addAlert(RiskLevel.unknown, 'Sensors offline', 'Laboratory 03 · Health check failed');
+        _addAlert(
+          RiskLevel.unknown,
+          'Sensors offline',
+          'Laboratory 03 · Health check failed',
+        );
       }
     } else {
-      if (l == RiskLevel.critical && _prev != RiskLevel.critical && active == null) {
+      if (l == RiskLevel.critical &&
+          _prev != RiskLevel.critical &&
+          active == null) {
         _counter++;
-        final inc = Incident(simulation ? 'SIM-$_counter' : 'INC-2026-0$_counter', simulation);
-        inc.timeline.add(TimelineEntry('Fire probability reached ${(risk * 100).round()}%'));
+        final inc = Incident(
+          simulation ? 'SIM-$_counter' : 'INC-2026-0$_counter',
+          simulation,
+        );
+        inc.timeline.add(
+          TimelineEntry('Fire probability reached ${(risk * 100).round()}%'),
+        );
         inc.timeline.add(TimelineEntry('Incident ${inc.id} generated'));
         if (flame) inc.timeline.add(TimelineEntry('Flame detected'));
         incidents.insert(0, inc);
         active = inc;
-        _addAlert(RiskLevel.critical, 'Fire alert — Laboratory 03',
-            flame ? 'Ground Floor · Flame confirmed' : 'Ground Floor · High smoke level');
+        _addAlert(
+          RiskLevel.critical,
+          'Fire alert — Laboratory 03',
+          flame
+              ? 'Ground Floor · Flame confirmed'
+              : 'Ground Floor · High smoke level',
+        );
       } else if (l == RiskLevel.warning && _prev == RiskLevel.normal) {
-        _addAlert(RiskLevel.warning, 'Smoke rising — Laboratory 03', 'Ground Floor · Smoke $smoke');
+        _addAlert(
+          RiskLevel.warning,
+          'Smoke rising — Laboratory 03',
+          'Ground Floor · Smoke $smoke',
+        );
       } else if (l == RiskLevel.normal && active != null) {
         final inc = active!;
         inc.end = DateTime.now();
         inc.timeline.add(TimelineEntry('Conditions returned to normal'));
-        _addAlert(RiskLevel.normal, 'Incident ${inc.id} closed',
-            'Laboratory 03 · ${inc.acknowledged ? "Acknowledged" : "Auto-resolved"}',
-            resolved: true);
+        _addAlert(
+          RiskLevel.normal,
+          'Incident ${inc.id} closed',
+          'Laboratory 03 · ${inc.acknowledged ? "Acknowledged" : "Auto-resolved"}',
+          resolved: true,
+        );
         active = null;
       }
       _prev = l;
@@ -176,7 +205,10 @@ class AppProvider extends ChangeNotifier {
   }
 
   void _addAlert(RiskLevel l, String t, String s, {bool resolved = false}) {
-    alerts.insert(0, AlertItem(l, simulation ? '[SIM] $t' : t, s, resolved: resolved));
+    alerts.insert(
+      0,
+      AlertItem(l, simulation ? '[SIM] $t' : t, s, resolved: resolved),
+    );
   }
 
   // ---- actions ----
@@ -221,4 +253,16 @@ class AppProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+}
+
+/// Firebase start nahi hua to ye service sirf error deti hai (app OFFLINE dikhati hai)
+class _UnavailableService implements SensorService {
+  @override
+  Future<SensorReading> read() async =>
+      throw Exception(
+        'Firebase initialize nahi hua (lib/firebase_options.dart bharein)',
+      );
+
+  @override
+  void dispose() {}
 }

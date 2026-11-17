@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Firebase / ESP32 (HTTP) ke liye internet permission zaroori hai;
+         template mein ye sirf debug manifest mein hoti hai, release mein nahi. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="ignistwin"
         android:name="${applicationName}"

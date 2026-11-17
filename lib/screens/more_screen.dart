@@ -15,75 +15,136 @@ class MoreScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.watch<AppProvider>();
-    return ListView(padding: const EdgeInsets.all(20), children: [
-      const Text('More', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800)),
-      const SizedBox(height: 18),
-      _tile(Icons.science_outlined, 'Simulation Mode', 'Test alerts with sliders', AppColors.orange,
-          () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SimulationScreen()))),
-      // Data source: dummy / firebase / esp32
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        const Text(
+          'More',
+          style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 18),
+        _tile(
+          Icons.science_outlined,
+          'Simulation Mode',
+          'Test alerts with sliders',
+          AppColors.orange,
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SimulationScreen()),
+          ),
+        ),
+        // Data source: firebase / esp32
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    IconBox(
+                      Icons.storage_outlined,
+                      color: AppColors.green,
+                      bg: AppColors.green.withValues(alpha: 0.15),
+                      size: 48,
+                    ),
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Text(
+                        'Data source',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<DataSource>(
+                    showSelectedIcon: false,
+                    segments: [
+                      for (final d in DataSource.values)
+                        ButtonSegment(value: d, label: Text(d.label)),
+                    ],
+                    selected: {p.source},
+                    onSelectionChanged: (v) => p.setSource(v.first),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  switch (p.source) {
+                    DataSource.firebase =>
+                      'Real sensors via Firebase Realtime Database.',
+                    DataSource.esp32 =>
+                      'Direct local WiFi connection to ESP32.',
+                  },
+                  style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+        ),
+        _tile(
+          Icons.router_outlined,
+          'ESP32 / Smoke settings',
+          'Local IP & smoke threshold',
+          AppColors.cyan,
+          () => _settings(context),
+        ),
+        _tile(Icons.logout, 'Sign out', '', AppColors.muted, () {
+          context.read<AppProvider>().stop();
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            (_) => false,
+          );
+        }),
+        const SizedBox(height: 20),
+        Text(
+          'Academic prototype v1.0. Not a certified fire alarm.',
+          style: mono.copyWith(color: AppColors.grey, fontSize: 12),
+        ),
+      ],
+    );
+  }
+
+  Widget _tile(IconData i, String t, String sub, Color c, VoidCallback onTap) =>
       Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: AppCard(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              IconBox(Icons.storage_outlined, color: AppColors.green, bg: AppColors.green.withValues(alpha: 0.15), size: 48),
-              const SizedBox(width: 14),
-              const Expanded(
-                child: Text('Data source', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-              ),
-            ]),
-            const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<DataSource>(
-                showSelectedIcon: false,
-                segments: [
-                  for (final d in DataSource.values) ButtonSegment(value: d, label: Text(d.label)),
-                ],
-                selected: {p.source},
-                onSelectionChanged: (v) => p.setSource(v.first),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              switch (p.source) {
-                DataSource.dummy => 'Fake demo data. No hardware needed.',
-                DataSource.firebase => 'Real sensors via Firebase Realtime Database.',
-                DataSource.esp32 => 'Direct local WiFi connection to ESP32.',
-              },
-              style: const TextStyle(color: AppColors.muted, fontSize: 13),
-            ),
-          ]),
-        ),
-      ),
-      _tile(Icons.router_outlined, 'ESP32 / Smoke settings', 'Local IP & smoke threshold', AppColors.cyan,
-          () => _settings(context)),
-      _tile(Icons.logout, 'Sign out', '', AppColors.muted, () {
-        context.read<AppProvider>().stop();
-        Navigator.pushAndRemoveUntil(
-            context, MaterialPageRoute(builder: (_) => const LoginScreen()), (_) => false);
-      }),
-      const SizedBox(height: 20),
-      Text('Academic prototype v1.0. Not a certified fire alarm.',
-          style: mono.copyWith(color: AppColors.grey, fontSize: 12)),
-    ]);
-  }
-
-  Widget _tile(IconData i, String t, String sub, Color c, VoidCallback onTap) => Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: AppCard(
           onTap: onTap,
-          child: Row(children: [
-            IconBox(i, color: c, bg: c.withValues(alpha: 0.15), size: 48),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(t, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-                if (sub.isNotEmpty) Text(sub, style: const TextStyle(color: AppColors.muted, fontSize: 13)),
-              ]),
-            ),
-            const Icon(Icons.chevron_right, color: AppColors.grey),
-          ]),
+          child: Row(
+            children: [
+              IconBox(i, color: c, bg: c.withValues(alpha: 0.15), size: 48),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      t,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    ),
+                    if (sub.isNotEmpty)
+                      Text(
+                        sub,
+                        style: const TextStyle(
+                          color: AppColors.muted,
+                          fontSize: 13,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: AppColors.grey),
+            ],
+          ),
         ),
       );
 
@@ -96,16 +157,29 @@ class MoreScreen extends StatelessWidget {
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.card,
         title: const Text('ESP32 connection'),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: ip, decoration: const InputDecoration(labelText: 'ESP32 IP (e.g. 192.168.1.50)')),
-          TextField(
-            controller: thr,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Smoke threshold (0-4095)'),
-          ),
-        ]),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: ip,
+              decoration: const InputDecoration(
+                labelText: 'ESP32 IP (e.g. 192.168.1.50)',
+              ),
+            ),
+            TextField(
+              controller: thr,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Smoke threshold (0-4095)',
+              ),
+            ),
+          ],
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             onPressed: () {
               provider.saveSettings(ip.text, int.tryParse(thr.text) ?? 1500);

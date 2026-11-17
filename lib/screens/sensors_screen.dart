@@ -60,6 +60,15 @@ class _SensorsScreenState extends State<SensorsScreen> {
               _dot(AppColors.grey),
               Text(' ${2 - s.onlineCount} Offline', style: mono.copyWith(color: AppColors.muted)),
             ]),
+            if (!s.simulation && !on && s.lastError != null) ...[
+              const SizedBox(height: 12),
+              AppCard(
+                child: Text(
+                  s.lastError!,
+                  style: const TextStyle(color: AppColors.orange, fontSize: 12),
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             FilterChips(_filters, filter, (i) => setState(() => filter = i)),
             const SizedBox(height: 16),
