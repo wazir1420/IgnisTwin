@@ -51,15 +51,23 @@ class _SensorsScreenState extends State<SensorsScreen> {
         items.add(
           _card(
             icon: Icons.air,
-            iconColor: s.smoke >= s.smokeThreshold
+            iconColor: !s.smokeWarmingUp && s.smoke >= s.smokeThreshold
                 ? AppColors.red
                 : AppColors.muted,
             title: 'Smoke level',
-            detail: 'Air conditions in the monitored area',
+            detail: s.smokeWarmingUp
+                ? 'MQ-2 sensor is stabilizing after startup'
+                : 'Air conditions in the monitored area',
             online: on,
-            value: s.smoke >= s.smokeThreshold ? 'High' : 'Normal',
-            valueColor: s.smoke >= s.smokeThreshold
+            value: s.smokeWarmingUp
+                ? 'Warming up'
+                : s.smoke >= s.smokeThreshold
+                ? 'High'
+                : 'Normal',
+            valueColor: !s.smokeWarmingUp && s.smoke >= s.smokeThreshold
                 ? AppColors.red
+                : s.smokeWarmingUp
+                ? AppColors.orange
                 : AppColors.text,
             ago: on ? null : ago(s.lastUpdate),
           ),

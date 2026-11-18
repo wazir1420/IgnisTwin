@@ -89,30 +89,67 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Icon(
-                      lvl == RiskLevel.critical
-                          ? Icons.local_fire_department
-                          : Icons.warning_amber_rounded,
-                      color: col,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      lvl.label,
-                      style: mono.copyWith(
-                        color: col,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final label = Row(
+                      children: [
+                        Icon(
+                          lvl == RiskLevel.critical
+                              ? Icons.local_fire_department
+                              : Icons.warning_amber_rounded,
+                          color: col,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            lvl.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: mono.copyWith(
+                              color: col,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                    final updated = Text(
                       'Updated ${ago(s.lastUpdate)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: mono.copyWith(color: AppColors.grey, fontSize: 12),
-                    ),
-                  ],
+                    );
+
+                    if (constraints.maxWidth < 380) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          label,
+                          Padding(
+                            padding: const EdgeInsets.only(left: 32, top: 4),
+                            child: updated,
+                          ),
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      children: [
+                        Expanded(child: label),
+                        const SizedBox(width: 8),
+                        updated,
+                      ],
+                    );
+                  },
                 ),
+                if (s.smokeWarmingUp) ...[
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Smoke sensor warming up; smoke alerts resume in about a minute.',
+                    style: TextStyle(color: AppColors.orange, fontSize: 12),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 Text(
                   appState.isAdmin ? 'Admin dashboard' : 'Dashboard',

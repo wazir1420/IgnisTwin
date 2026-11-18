@@ -1,10 +1,3 @@
-
-
-
-
-
-
-
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
@@ -26,6 +19,7 @@ const char* DEVICE_ID = "ESP32-BEDROOM-01";
 #define SMOKE_ACTIVE LOW
 
 #define SEND_INTERVAL_MS 2000
+#define SMOKE_WARMUP_MS 60000
 
 unsigned long lastSend = 0;
 
@@ -69,9 +63,10 @@ void loop() {
   int flameAnalog  = analogRead(FLAME_AO);
   int smokeDigital = digitalRead(SMOKE_DO);
   int smokeAnalog  = analogRead(SMOKE_AO);
+  bool smokeReady = millis() >= SMOKE_WARMUP_MS;
 
   bool flame      = (flameDigital == FLAME_ACTIVE);
-  bool smokeAlert = (smokeDigital == SMOKE_ACTIVE);
+  bool smokeAlert = smokeReady && (smokeDigital == SMOKE_ACTIVE);
 
 
   Serial.println("\n------ SENSOR READINGS ------");
@@ -79,11 +74,13 @@ void loop() {
   Serial.println(flame ? "ALERT: FIRE DETECTED!" : "No Fire Detected");
   Serial.println("Smoke Analog: " + String(smokeAnalog) + " | Digital: " + String(smokeDigital));
   Serial.println(smokeAlert ? "ALERT: SMOKE DETECTED!" : "No Smoke Detected");
+  if (!smokeReady) Serial.println("MQ-2 sensor warming up; smoke alerts paused.");
 
 
   String json = "{\"flame\":" + String(flame ? "true" : "false") +
                 ",\"smoke\":" + String(smokeAnalog) +
                 ",\"smokeAlert\":" + String(smokeAlert ? "true" : "false") +
+                ",\"smokeReady\":" + String(smokeReady ? "true" : "false") +
                 ",\"flameAnalog\":" + String(flameAnalog) +
                 ",\"lastSeen\":{\".sv\":\"timestamp\"}}";
 
@@ -100,5 +97,8 @@ void loop() {
   http.addHeader("Content-Type", "application/json");
   int code = http.PUT(json);
   Serial.println("Firebase HTTP " + String(code) + (code == 200 ? "  (OK)" : "  (ERROR)"));
+  if (code != 200) {
+    Serial.println("Firebase response: " + http.getString());
+  }
   http.end();
 }

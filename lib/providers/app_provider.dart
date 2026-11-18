@@ -14,7 +14,7 @@ import '../services/sensor_service.dart';
 class AppProvider extends ChangeNotifier {
   static const _offlineAlertFailureThreshold = 10;
 
-
+  static const _smokeWarmupDuration = Duration(seconds: 60);
 
   AppProvider({this.firebaseReady = false}) : source = DataSource.firebase {
     _service = _create(source);
@@ -22,30 +22,27 @@ class AppProvider extends ChangeNotifier {
 
   final bool firebaseReady;
 
-
   late SensorService _service;
   DataSource source;
   String espIp = '192.168.1.50';
   int smokeThreshold = 1500;
   int _assignedSensorCount = 0;
 
-
   bool simulation = false;
   bool simFlame = true;
   int simSmoke = 2000;
 
-
   bool online = false;
   bool liveFlame = false;
   int liveSmoke = 0;
+  bool? _sensorSmokeReady;
+  DateTime? _smokeWarmupUntil;
   DateTime? lastUpdate;
-
 
   String? lastError;
   int _fails = 0;
   bool _busy = false;
   bool _offlineAlerted = false;
-
 
   String currentUserRole = 'user';
   String currentUserName = 'Operator';
@@ -79,6 +76,8 @@ class AppProvider extends ChangeNotifier {
       _assignedSensorCount = 0;
       _service = _create(source);
       online = false;
+      _sensorSmokeReady = null;
+      _smokeWarmupUntil = null;
       _fails = 0;
       lastError = null;
     }
@@ -96,7 +95,6 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-
   final List<AlertItem> alerts = [];
   final List<Incident> incidents = [];
   Incident? active;
@@ -104,17 +102,22 @@ class AppProvider extends ChangeNotifier {
   int _counter = 140;
   Timer? _timer;
 
-
   int tab = 0;
   void setTab(int i) {
     tab = i;
     notifyListeners();
   }
 
-
   bool get flame => simulation ? simFlame : liveFlame;
   int get smoke => simulation ? simSmoke : liveSmoke;
   bool get sensorsOnline => simulation || online;
+  bool get smokeWarmingUp =>
+      !simulation &&
+      online &&
+      (_sensorSmokeReady == false ||
+          (_sensorSmokeReady == null &&
+              _smokeWarmupUntil != null &&
+              DateTime.now().isBefore(_smokeWarmupUntil!)));
   int get totalSensorCount => simulation
       ? 2
       : source == DataSource.firebase
@@ -123,21 +126,20 @@ class AppProvider extends ChangeNotifier {
   int get onlineCount => sensorsOnline ? totalSensorCount : 0;
   int get offlineCount => totalSensorCount - onlineCount;
 
-
   double get risk {
-    final s = (smoke / smokeThreshold).clamp(0.0, 1.0).toDouble();
+    final reading = smokeWarmingUp ? 0 : smoke;
+    final s = (reading / smokeThreshold).clamp(0.0, 1.0).toDouble();
     return (flame ? 0.6 : 0.0) + 0.4 * s;
   }
 
   RiskLevel get level {
     if (!sensorsOnline) return RiskLevel.unknown;
     if (risk >= 0.6) return RiskLevel.critical;
-    if (risk >= 0.3) return RiskLevel.warning;
+    if (!smokeWarmingUp && smoke >= smokeThreshold) return RiskLevel.warning;
     return RiskLevel.normal;
   }
 
   int get unreadCount => alerts.where((a) => !a.read).length;
-
 
   void start() {
     _timer?.cancel();
@@ -153,7 +155,6 @@ class AppProvider extends ChangeNotifier {
     _service.dispose();
     super.dispose();
   }
-
 
   SensorService _create(DataSource s) => switch (s) {
     DataSource.firebase =>
@@ -175,21 +176,28 @@ class AppProvider extends ChangeNotifier {
     source = s;
     _service = _create(s);
     online = false;
+    _sensorSmokeReady = null;
+    _smokeWarmupUntil = null;
     _fails = 0;
     _offlineAlerted = false;
     notifyListeners();
   }
 
   void saveSettings(String ip, int thr) {
-    espIp = ip.trim();
+    final normalizedIp = ip.trim();
+    final ipChanged = normalizedIp != espIp;
+    espIp = normalizedIp;
     smokeThreshold = thr;
-    if (source == DataSource.esp32) {
+    if (source == DataSource.esp32 && ipChanged) {
       _service.dispose();
       _service = Esp32SensorService(espIp);
+      online = false;
+      _sensorSmokeReady = null;
+      _smokeWarmupUntil = null;
+      _fails = 0;
     }
     notifyListeners();
   }
-
 
   Future<void> _poll() async {
     if (_busy) return;
@@ -197,17 +205,33 @@ class AppProvider extends ChangeNotifier {
     if (!simulation) {
       try {
         final r = await _service.read();
-        liveFlame = r.flame;
-        liveSmoke = r.smoke;
-        online = true;
-        _fails = 0;
-        _offlineAlerted = false;
-        lastUpdate = r.time;
-        lastError = null;
+        if (r.isStale) {
+          lastError = 'The device has not sent a reading recently.';
+          _fails++;
+          online = false;
+          _sensorSmokeReady = null;
+          _smokeWarmupUntil = null;
+        } else {
+          if (!online && r.smokeReady == null) {
+            _smokeWarmupUntil = DateTime.now().add(_smokeWarmupDuration);
+          }
+          liveFlame = r.flame;
+          liveSmoke = r.smoke;
+          _sensorSmokeReady = r.smokeReady;
+          online = true;
+          _fails = 0;
+          _offlineAlerted = false;
+          lastUpdate = r.time;
+          lastError = null;
+        }
       } catch (e) {
         lastError = '$e';
         _fails++;
-        if (_fails >= 2) online = false;
+        if (_fails >= 2) {
+          online = false;
+          _sensorSmokeReady = null;
+          _smokeWarmupUntil = null;
+        }
       }
     } else {
       lastUpdate = DateTime.now();
@@ -256,9 +280,7 @@ class AppProvider extends ChangeNotifier {
         _addAlert(
           RiskLevel.critical,
           'Possible fire danger — $kMonitoredRoom',
-          flame
-              ? 'Fire signs detected'
-              : 'Smoke level is high',
+          flame ? 'Fire signs detected' : 'Smoke level is high',
         );
       } else if (l == RiskLevel.warning && _prev == RiskLevel.normal) {
         _addAlert(
@@ -284,14 +306,12 @@ class AppProvider extends ChangeNotifier {
   }
 
   void _addAlert(RiskLevel l, String t, String s, {bool resolved = false}) {
-
     PushService.showAlert(t, s);
     alerts.insert(
       0,
       AlertItem(l, simulation ? '[TEST] $t' : t, s, resolved: resolved),
     );
   }
-
 
   void acknowledge() {
     final inc = active;
@@ -335,7 +355,6 @@ class AppProvider extends ChangeNotifier {
     }
   }
 }
-
 
 class _UnavailableService implements SensorService {
   @override

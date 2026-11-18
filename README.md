@@ -57,7 +57,7 @@ email/password; sensor reads remain limited to admins and the assigned,
 approved user. The admin dashboard discovers live unassigned device IDs,
 registers their name/room, and assigns them. Assignment records live under
 `users/{uid}/devices/{deviceId}`. The user app listens only to its own assigned
-devices. Device status is online only if a reading arrived within two minutes.
+devices. Device status is online only if a reading arrived within 30 seconds.
 Admins can reassign or remove a device and remove a user's Realtime Database
 profile from the dashboard. Removing a profile also unassigns its devices; the
 Firebase Authentication account itself must be removed separately in Firebase
@@ -95,6 +95,12 @@ owning `users/{uid}/devices/{deviceId}` node and live sensor data is at
 `devices/{deviceId}/sensordata`.
 
 ## Sensor integration note
+
+The ESP32 sketch reports `smokeReady: false` for its first 60 seconds so the app
+can ignore MQ-2 startup readings; flame alerts remain active. Older firmware
+uses the app's first-connection 60-second fallback. Set the smoke alert level
+based on the sensor's clean-air readings; the default threshold may need
+adjustment for your module.
 
 Because unauthenticated direct writes are enabled, anyone who learns the
 database URL and a device ID can forge or overwrite its readings. Use unique,

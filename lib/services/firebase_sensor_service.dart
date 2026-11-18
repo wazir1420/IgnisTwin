@@ -38,6 +38,7 @@ class FirebaseSensorService implements SensorService {
   final _firstEvent = Completer<void>();
 
   bool? _flame;
+  bool? _smokeReady;
   int _smoke = 0;
   int? _lastSeenMs;
   int _offsetMs = 0;
@@ -115,6 +116,7 @@ class FirebaseSensorService implements SensorService {
 
     if (latestReadings == null) {
       _flame = null;
+      _smokeReady = null;
       _smoke = 0;
       _lastSeenMs = null;
       return;
@@ -125,6 +127,7 @@ class FirebaseSensorService implements SensorService {
     _smoke = _asInt(
       _pick(latestReadings, const ['smoke', 'smokeLevel', 'smokeValue']),
     );
+    _smokeReady = _asBool(_pick(latestReadings, const ['smokeReady']));
     _lastSeenMs = _asMillis(
       _pick(latestReadings, const [
         'lastSeen',
@@ -221,13 +224,15 @@ class FirebaseSensorService implements SensorService {
     }
 
     final ls = _lastSeenMs;
-    if (ls != null) {
-      final serverNow = DateTime.now().millisecondsSinceEpoch + _offsetMs;
-      if (serverNow - ls > kStaleAfterMs) {
-        throw Exception('The device has not sent a reading recently.');
-      }
-    }
-    return SensorReading(flame: flame, smoke: _smoke, time: DateTime.now());
+    final serverNow = DateTime.now().millisecondsSinceEpoch + _offsetMs;
+    final isStale = ls == null || serverNow - ls > kStaleAfterMs;
+    return SensorReading(
+      flame: flame,
+      smoke: _smoke,
+      time: DateTime.now(),
+      smokeReady: _smokeReady,
+      isStale: isStale,
+    );
   }
 
   @override

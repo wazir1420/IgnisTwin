@@ -14,4 +14,4 @@ const String kDatabaseUrl =
 
 
 
-const int kStaleAfterMs = 60000;
+const int kStaleAfterMs = 30000;

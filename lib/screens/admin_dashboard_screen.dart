@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../core/app_config.dart';
 import '../core/app_colors.dart';
 import '../core/app_theme.dart';
 import '../providers/app_provider.dart';
@@ -20,6 +21,7 @@ class AdminDashboardScreen extends StatefulWidget {
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   late Future<_DashboardData> _data;
   StreamSubscription<Map<String, int>>? _sensorSubscription;
+  Timer? _statusRefreshTimer;
   Map<String, int> _sensorLastSeen = const {};
   final Set<String> _knownLiveDeviceIds = {};
 
@@ -27,6 +29,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   void initState() {
     super.initState();
     _data = _loadData();
+    _statusRefreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (mounted) setState(() {});
+    });
     _sensorSubscription = AuthService.instance.watchDeviceLastSeen().listen(
       (lastSeen) {
         if (!mounted) return;
@@ -51,6 +56,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   void dispose() {
+    _statusRefreshTimer?.cancel();
     _sensorSubscription?.cancel();
     super.dispose();
   }
@@ -789,7 +795,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     if (lastSeen == null) return false;
     final timestamp = DateTime.fromMillisecondsSinceEpoch(lastSeen);
     final age = DateTime.now().difference(timestamp);
-    return !age.isNegative && age <= const Duration(minutes: 2);
+    return !age.isNegative && age.inMilliseconds <= kStaleAfterMs;
   }
 }
 

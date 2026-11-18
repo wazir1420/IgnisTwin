@@ -132,9 +132,15 @@ class TwinScreen extends StatelessWidget {
                     ),
                     _metric(
                       'Smoke level',
-                      s.smoke >= s.smokeThreshold ? 'High' : 'Normal',
-                      s.smoke >= s.smokeThreshold
+                      s.smokeWarmingUp
+                          ? 'Warming up'
+                          : s.smoke >= s.smokeThreshold
+                          ? 'High'
+                          : 'Normal',
+                      !s.smokeWarmingUp && s.smoke >= s.smokeThreshold
                           ? AppColors.red
+                          : s.smokeWarmingUp
+                          ? AppColors.orange
                           : AppColors.text,
                     ),
                     _metric(

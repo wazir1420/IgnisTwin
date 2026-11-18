@@ -55,7 +55,6 @@ class AuthService {
             if (entry.value is! Map || readingSubscriptions.containsKey(id)) {
               continue;
             }
-            var firstSnapshot = true;
             readingSubscriptions[id] = _devices
                 .child(id)
                 .child('sensordata')
@@ -64,14 +63,14 @@ class AuthService {
                   final readings = readingEvent.snapshot.value;
                   if (readings is Map) {
                     final timestamp = _lastSeenMillis(readings);
-                    final now = DateTime.now().millisecondsSinceEpoch;
-                    lastSeen[id] = firstSnapshot && timestamp != null
-                        ? (timestamp > now ? now : timestamp)
-                        : now;
+                    if (timestamp == null) {
+                      lastSeen.remove(id);
+                    } else {
+                      lastSeen[id] = timestamp;
+                    }
                   } else {
                     lastSeen.remove(id);
                   }
-                  firstSnapshot = false;
                   controller.add(Map<String, int>.unmodifiable(lastSeen));
                 }, onError: controller.addError);
           }

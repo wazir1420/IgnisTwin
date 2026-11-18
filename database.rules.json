@@ -78,6 +78,9 @@
           "flameAnalog": {
             ".validate": "newData.isNumber()"
           },
+          "smokeReady": {
+            ".validate": "newData.isBoolean()"
+          },
           "lastSeen": {
             ".validate": "newData.isNumber()"
           },
